@@ -2,369 +2,482 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PriceSync Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <style>
-/* Layout: one 3-step flow (upload, review, export) in an app shell: sidebar from 960px, top bar + bottom tabs on phones; colour is spent on the data */
+/* Layout: cyan + ink look (18px ink-bordered panels, light big figures) on a 3-step flow: upload, review, export; sidebar from 960px, bottom tabs on phones */
 :root {
-  --ground: #F5F7FA; --surface: #FFFFFF; --raised: #EEF2F6; --active: #E6EBF1;
-  --border: #E1E6EC; --rule: #EDF0F4; --control: #C9D1DB;
-  --text: #0F1720; --muted: #566170;
-  --primary: #141A21; --on-primary: #FFFFFF;
-  --accent: #0369A1; --accent-soft: #E2F0F9;
-  --positive: #1F7A4D; --negative: #C4242A;
+  --cyan: #82E9FF; --cyan-soft: #E6FBFF; --ink: #222222; --black: #000000; --white: #FFFFFF;
+  --gray: #6F7378; --muted: #A5A8AC; --soft: #F6F6F6; --line: #E8E8E8; --line-2: #C9CED4;
+  --link: #0E8FB0; --up: #1F8F2E; --down: #D63B3B; --dot: #FD5151; --purple: #9F2EF8;
   /* status tints are the fills written into the Excel file */
   --upd-bg: #C6EFCE; --upd-ink: #1C5A2B; --add-bg: #BDD7EE; --add-ink: #153D63;
   --rev-bg: #FFFF96; --rev-ink: #5A4700; --same-bg: #EDF0F4; --same-ink: #566170;
-  --warn-bg: #FFFBEB; --warn-line: #FDE68A; --warn-ink: #92400E;
-  --err-bg: #FDEDEC; --err-line: #F5B5B2; --err-ink: #8A1C1C;
-  --r-card: 10px; --r-ctl: 8px;
   --font: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
-  --tab-h: 64px;
+  --gut: 25px; --tab-h: 72px;
   color-scheme: light;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { height: 100%; }
-body { margin: 0; background: var(--ground); color: var(--text); font: 15px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+body { margin: 0; background: var(--white); color: var(--ink); font: 15px/1.45 var(--font); -webkit-font-smoothing: antialiased; }
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: 0; padding: 0; text-align: inherit; }
-h1, h2, h3, p, ol, dl, dd { margin: 0; }
-h1 { font-size: 24px; font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; text-wrap: balance; }
-h2 { font-size: 16px; font-weight: 600; }
-:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
-.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+h1, h2, p, ol, dl, dd { margin: 0; font-weight: inherit; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.i { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 .num { font-variant-numeric: tabular-nums; }
-.muted { color: var(--muted); }
-.pos { color: var(--positive); } .neg { color: var(--negative); }
+.gray { color: var(--gray); } .muted { color: var(--muted); } .up { color: var(--up); } .down { color: var(--down); } .new { color: var(--add-ink); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.fine { font-size: 13px; color: var(--muted); }
 
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: var(--r-ctl); font-weight: 500; white-space: nowrap; transition: background-color .15s, border-color .15s; }
-.btn.primary { background: var(--primary); color: var(--on-primary); }
-.btn.primary:hover { background: #2A333E; }
-.btn.secondary { background: var(--surface); border: 1px solid var(--control); }
-.btn.secondary:hover { border-color: #9AA5B3; }
-.btn.lg { min-height: 50px; padding: 0 24px; font-size: 16px; }
-.btn.block { width: 100%; }
-.btn[aria-busy="true"] { cursor: progress; opacity: .85; }
-.btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
-.link { color: var(--accent); font-weight: 500; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; }
-.link:hover { text-decoration: underline; text-underline-offset: 3px; }
-.spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .35); border-top-color: currentColor; animation: spin .8s linear infinite; }
+/* brand */
+.logo { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); }
+.logo svg { width: 32px; height: 32px; }
+.logo b { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; line-height: 1; }
+.logo b span { font-weight: 300; }
+
+/* controls */
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; height: 50px; width: 100%; border-radius: 8px; font-size: 16px; transition: filter .15s; }
+.btn:hover { filter: brightness(.96); }
+.btn .i { width: 20px; height: 20px; }
+.btn-cyan { background: var(--cyan); color: var(--ink); }
+.btn-dark { background: var(--ink); color: var(--white); }
+.btn-outline { background: var(--white); border: 1px solid var(--line-2); color: #434343; font-size: 15px; }
+.btn.sm { width: auto; min-width: 145px; padding: 0 20px; height: 40px; font-size: 14px; border-radius: 20px; }
+.btn[aria-busy="true"] { cursor: progress; filter: saturate(.6); }
+.link { color: var(--link); text-decoration: underline; text-underline-offset: 2px; font-size: 13px; }
+.spin { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(0, 0, 0, .15); border-top-color: currentColor; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.pill { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.back { width: 34px; height: 34px; border-radius: 50%; background: var(--line); display: grid; place-items: center; }
+.back .i { width: 16px; height: 16px; stroke-width: 2.2; }
+.icon-btn { width: 34px; height: 34px; display: grid; place-items: center; position: relative; color: var(--black); }
+.bell .dot { position: absolute; top: 3px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--dot); }
+.pill { display: inline-flex; align-items: center; height: 22px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .pill.UPDATED { background: var(--upd-bg); color: var(--upd-ink); }
 .pill.ADDED { background: var(--add-bg); color: var(--add-ink); }
 .pill.REVIEW { background: var(--rev-bg); color: var(--rev-ink); }
 .pill.UNCHANGED { background: var(--same-bg); color: var(--same-ink); }
-.notice { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r-ctl); font-size: 14px; }
-.notice .i { margin-top: 2px; }
-.notice.warn { background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn-ink); }
-.notice.err { background: var(--err-bg); border: 1px solid var(--err-line); color: var(--err-ink); }
-.toast { position: fixed; z-index: 60; left: 50%; top: max(16px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(560px, calc(100% - 32px)); box-shadow: 0 8px 24px rgba(15, 23, 32, .12); border-radius: var(--r-ctl); }
-.mark { width: 28px; height: 28px; flex-shrink: 0; }
+.notice { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
+.notice .i { width: 18px; height: 18px; margin-top: 1px; }
+.notice.warn { background: #FFFBDB; border: 1px solid #E2C93F; color: var(--rev-ink); }
+.notice.err { background: #FDECEC; border: 1px solid #F0A9A9; color: #8A1C1C; }
+.toast { position: fixed; z-index: 60; left: 50%; top: max(16px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(560px, calc(100% - 32px)); }
+.st { width: var(--s, 38px); height: var(--s, 38px); border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: var(--black); color: var(--white); position: relative; }
+.st .i { width: 48%; height: 48%; stroke-width: 2.2; }
+.st.REVIEW::after { content: ""; position: absolute; top: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--dot); border: 2px solid var(--white); }
+.st.cyan { background: var(--cyan); color: var(--ink); }
+.st.soft { background: var(--soft); color: var(--gray); }
 
-/* welcome */
-.welcome { min-height: 100%; display: grid; background: var(--surface); }
-.welcome-art { background: var(--accent-soft); display: grid; place-items: center; padding: 32px max(16px, env(safe-area-inset-left, 0px)) 24px max(16px, env(safe-area-inset-right, 0px)); }
-.welcome-art svg { width: min(460px, 100%); height: auto; }
-.welcome-body { display: flex; flex-direction: column; gap: 20px; padding: 28px max(20px, env(safe-area-inset-right, 0px)) max(32px, env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px)); max-width: 560px; }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px; }
-.welcome h1 { font-size: 26px; }
-.welcome-art svg { max-height: 260px; }
-.statement { font-size: 17px; color: var(--text); max-width: 44ch; }
-.flow { list-style: none; padding: 0; display: grid; gap: 2px; counter-reset: step; }
-.flow li { display: grid; grid-template-columns: 32px 1fr; gap: 0 12px; padding: 12px 0; border-top: 1px solid var(--rule); counter-increment: step; }
-.flow li::before { content: counter(step); grid-row: span 2; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 14px; display: grid; place-items: center; }
-.flow b { font-weight: 600; }
-.flow span { color: var(--muted); font-size: 14px; }
+/* welcome (onboarding) */
+.welcome { min-height: 100%; display: grid; grid-template-areas: "top" "art" "body"; grid-template-rows: auto auto 1fr; padding-block: 24px max(28px, env(safe-area-inset-bottom, 0px)); }
+.welcome > * { padding-left: max(var(--gut), env(safe-area-inset-left, 0px)); padding-right: max(var(--gut), env(safe-area-inset-right, 0px)); }
+.welcome-top { grid-area: top; }
+.welcome-art { grid-area: art; display: flex; justify-content: center; padding-top: 20px; padding-bottom: 12px; }
+.welcome-art svg { width: min(330px, 86%); height: auto; }
+.welcome-body { grid-area: body; display: flex; flex-direction: column; gap: 10px; }
+.display { font-size: 34px; font-weight: 500; line-height: 1.22; text-wrap: balance; }
+.lead { font-size: 15px; font-weight: 300; line-height: 1.55; color: var(--gray); }
+.flow { list-style: none; padding: 0; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+.flow li { display: flex; gap: 12px; align-items: center; font-size: 14px; }
+.flow li b { width: 26px; height: 26px; border-radius: 50%; background: var(--cyan); display: grid; place-items: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.flow li span { color: var(--gray); }
+.flow li strong { font-weight: 500; color: var(--ink); }
+.dots { display: flex; gap: 10px; justify-content: center; margin-top: 18px; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--ink); }
+.dots i.on { background: var(--ink); }
+.welcome-actions { margin-top: auto; padding-top: 28px; display: flex; flex-direction: column; gap: 10px; }
+.fine { font-size: 13px; color: var(--gray); text-align: center; }
 
 /* shell */
 .shell { min-height: 100%; }
 .side { display: none; }
-.topbar { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; gap: 10px; height: calc(52px + env(safe-area-inset-top, 0px)); padding: env(safe-area-inset-top, 0px) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); background: var(--surface); border-bottom: 1px solid var(--border); }
-.topbar b { font-weight: 600; flex: 1; }
-.icon-btn { width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--r-ctl); color: var(--muted); }
-.icon-btn:hover { background: var(--raised); color: var(--text); }
-.view { padding: 20px max(16px, env(safe-area-inset-right, 0px)) calc(var(--tab-h) + env(safe-area-inset-bottom, 0px) + 28px) max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 18px; }
-.title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.title-row > div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.finding { font-size: 15px; color: var(--muted); }
-.finding b { color: var(--text); font-weight: 600; }
-.finding.alert b { color: var(--negative); }
+.topbar { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; padding: 18px 0 18px; }
+.top-title { text-align: center; font-size: 18px; font-weight: 500; color: var(--black); }
+.top-mark svg { width: 30px; height: 30px; }
+.view { padding: 0 max(var(--gut), env(safe-area-inset-right, 0px)) calc(var(--tab-h) + env(safe-area-inset-bottom, 0px) + 28px) max(var(--gut), env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 18px; }
+.headline { font-size: 25px; font-weight: 500; line-height: 1.35; }
+.finding { font-size: 15px; font-weight: 300; color: var(--gray); }
+.finding b { font-weight: 500; color: var(--ink); }
+.finding.alert b { color: var(--down); }
+.panel { border: 1px solid var(--ink); border-radius: 18px; min-width: 0; background: var(--white); }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 14px 14px; border-bottom: 1px solid var(--ink); }
+.panel-head h2 { font-size: 17px; font-weight: 500; }
+.panel-body { padding: 16px 14px 18px; display: flex; flex-direction: column; gap: 14px; }
 .desk { display: none !important; }
-.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card); min-width: 0; }
-.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--rule); }
-.panel-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-.tabbar { position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr); height: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px)); padding: 0 max(4px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(4px, env(safe-area-inset-left, 0px)); background: var(--surface); border-top: 1px solid var(--border); }
-.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; color: var(--muted); }
-.tab[aria-current="page"] { color: var(--text); font-weight: 600; }
-.state { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--control); flex-shrink: 0; }
-.state .i { width: 12px; height: 12px; stroke-width: 2.6; }
-.state.done { background: var(--positive); border-color: var(--positive); color: #fff; }
-.state.current { border: 6px solid var(--accent); }
-.state.locked { border-style: dashed; }
-.count { margin-left: auto; min-width: 22px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--rev-bg); color: var(--rev-ink); font-size: 12px; font-weight: 600; display: grid; place-items: center; }
-.tab .count { margin: 0; position: absolute; top: 6px; left: calc(50% + 6px); min-width: 18px; height: 18px; font-size: 11px; }
-.tab { position: relative; }
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(4, 1fr); height: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px)); padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); background: var(--white); border-top: 1px solid var(--line); }
+.tab { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.tab .i { width: 26px; height: 26px; stroke-width: 1.4; }
+.tab[aria-current="page"] { color: var(--black); }
+.tab[aria-current="page"] .i { stroke-width: 1.9; }
+.badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--dot); color: var(--white); font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+.tab .badge { position: absolute; top: 8px; left: calc(50% + 6px); min-width: 18px; height: 18px; font-size: 11px; }
 
-/* upload */
-.drop-grid { display: grid; gap: 14px; }
-.drop { min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 18px; background: var(--surface); border: 1.5px dashed var(--control); border-radius: var(--r-card); transition: border-color .15s, background-color .15s; }
-.drop.has { border-style: solid; border-color: var(--border); }
-.drop.bad { border-color: var(--negative); }
-.drop.over { border-color: var(--accent); background: var(--accent-soft); }
-.drop-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.drop-head h2 span { font-weight: 400; color: var(--muted); }
-.drop-hint { font-size: 13px; color: var(--muted); }
-.drop-zone { display: flex; align-items: center; gap: 14px; min-height: 96px; padding: 14px; border-radius: var(--r-ctl); background: var(--raised); text-align: left; width: 100%; }
-.drop-zone:hover { background: var(--active); }
-.drop-zone .file-ico { width: 44px; height: 52px; flex-shrink: 0; }
-.drop-zone .fz-text { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
-.drop-zone b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.drop-zone span { font-size: 13px; color: var(--muted); }
-.drop-err { color: var(--negative); font-size: 14px; display: flex; gap: 6px; align-items: center; }
-.upload-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
+/* upload (sign-in form look) */
+.form { display: flex; flex-direction: column; min-width: 0; }
+.field-label { font-size: 14px; margin: 18px 0 6px; display: flex; justify-content: space-between; gap: 8px; }
+.field-label span { color: var(--muted); font-size: 12px; }
+.filebox { display: flex; align-items: center; gap: 12px; min-height: 64px; width: 100%; padding: 10px 12px; border: 1px solid var(--ink); border-radius: 8px; background: var(--white); text-align: left; transition: background-color .15s, border-color .15s; }
+.filebox:hover { background: var(--soft); }
+.filebox.none { border-style: dashed; border-color: var(--line-2); }
+.filebox.bad { border-color: var(--down); }
+.filebox.over { border-color: var(--link); background: var(--cyan-soft); }
+.filebox .st { --s: 38px; }
+.fb-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.fb-text b { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fb-text span { font-size: 12px; color: var(--gray); }
+.fb-act { font-size: 13px; color: var(--link); text-decoration: underline; white-space: nowrap; }
+.field-hint { font-size: 12px; color: var(--gray); margin-top: 6px; }
+.field-err { color: var(--down); font-size: 13px; margin-top: 6px; display: flex; gap: 6px; align-items: center; }
+.field-err .i { width: 16px; height: 16px; }
+.form-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 22px 0 28px; font-size: 13px; color: var(--gray); }
+.form .btn-outline { margin-top: 14px; }
+.foot { text-align: center; font-size: 13px; margin-top: 18px; color: var(--gray); }
+.upload-grid { display: grid; gap: 24px; }
+.cards-art { display: none; }
 
-/* review */
-.sync { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 8px; padding: 14px 16px; }
-.sync div { display: flex; flex-direction: column; min-width: 0; }
-.sync span { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sync b { font-size: 20px; font-weight: 600; }
-.sync .out b { color: var(--accent); }
-.sync .i { color: var(--muted); }
-.kpis { display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; }
-.kpi { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; text-align: left; border-bottom: 2px solid transparent; }
-.kpi:nth-child(odd) { border-right: 1px solid var(--rule); }
-.kpi:nth-child(-n+2) { box-shadow: inset 0 -1px 0 var(--rule); }
-.kpi span { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-.kpi span i { width: 10px; height: 10px; border-radius: 3px; }
-.kpi b { font-size: 24px; font-weight: 600; }
-.kpi.lead b { font-size: 30px; }
-.kpi[aria-selected="true"] { border-bottom-color: var(--text); background: var(--raised); }
-.kpi:hover { background: var(--raised); }
-.review-body { display: flex; flex-direction: column; gap: 18px; }
-.review-grid { display: grid; gap: 18px; }
-.list-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 16px; border-bottom: 1px solid var(--rule); }
-.list-head h2 { flex: 1; min-width: 0; }
-.search { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--control); border-radius: var(--r-ctl); background: var(--surface); width: 100%; }
-.search:focus-within { outline: 3px solid var(--accent); outline-offset: 1px; }
-.search input { border: 0; outline: none; background: transparent; flex: 1; min-width: 0; }
-.search .i { color: var(--muted); }
-.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; width: 100%; padding: 11px 16px; border-bottom: 1px solid var(--rule); text-align: left; }
-.row:hover { background: var(--raised); }
-.row[aria-current="true"] { background: var(--active); }
-.row .code { font-weight: 600; display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.row .code .i { width: 14px; height: 14px; color: var(--positive); stroke-width: 2.4; }
-.row .per { font-size: 13px; color: var(--muted); }
-.row .val { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
-.row .sub { text-align: right; font-size: 13px; color: var(--muted); }
-.row .sub .pill { height: 20px; font-size: 11px; }
-.list-foot { display: flex; justify-content: center; padding: 12px; }
-.empty { padding: 28px 16px; text-align: center; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.empty-frame { border: 1px dashed var(--control); border-radius: var(--r-card); padding: 28px 20px; background: var(--surface); display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
-.detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.detail-head h2 { font-size: 20px; }
-.price-move { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; font-variant-numeric: tabular-nums; }
-.price-move .old { font-size: 18px; color: var(--muted); }
-.price-move .new { font-size: 30px; font-weight: 600; }
-.facts { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px; }
-.facts dt { color: var(--muted); }
-.facts dd { text-align: right; font-variant-numeric: tabular-nums; }
-.siblings { border-top: 1px solid var(--rule); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+/* review (home + trade look) */
+.who { display: flex; align-items: center; gap: 13px; text-align: left; width: 100%; }
+.who .st { --s: 50px; }
+.who > span:last-child { min-width: 0; }
+.who-name { display: block; font-size: 16px; font-weight: 500; color: var(--black); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who-sub { display: block; font-size: 13px; color: var(--gray); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bal-label { font-size: 16px; font-weight: 500; }
+.bal-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bal-amount { font-size: 48px; font-weight: 300; line-height: 1.25; letter-spacing: -0.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bal-amount small { font-size: 18px; color: var(--gray); }
+.bal-delta { display: flex; flex-direction: column; align-items: flex-end; font-size: 15px; white-space: nowrap; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+.tile { min-height: 101px; border-radius: 18px; border: 1px solid var(--ink); display: flex; flex-direction: column; justify-content: space-between; gap: 10px; padding: 14px 16px 16px; font-size: 15px; transition: transform .15s; text-align: left; }
+.tile:hover { transform: translateY(-2px); }
+.tile .i { width: 20px; height: 20px; }
+.tile small { display: block; font-size: 12px; opacity: .8; }
+.tile.dark { background: var(--ink); color: var(--white); }
+.tile.dark .i { color: var(--cyan); }
+.tile.cyan { background: var(--cyan); }
+.tile[aria-disabled="true"] { opacity: .5; cursor: default; transform: none; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.tabs button { flex-shrink: 0; padding: 0 10px 8px; font-size: 15px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tabs button sup { font-size: 11px; margin-left: 2px; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+.search { display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 14px; border-radius: 10px; background: var(--soft); }
+.search:focus-within { outline: 2px solid var(--link); }
+.search input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-size: 15px; }
+.search input::placeholder { color: var(--muted); }
+.search .i { width: 22px; height: 22px; }
+.rowlist { padding: 8px 0 12px; }
+.row { display: flex; align-items: center; gap: 5px; width: 100%; min-height: 58px; margin-top: 5px; padding: 0 13px 0 11px; border-radius: 12px; text-align: left; }
+.row:hover { background: var(--soft); }
+.row[aria-current="true"] { background: var(--cyan-soft); }
+.r-name { flex: 1; min-width: 0; display: flex; flex-direction: column; margin-left: 6px; }
+.r-name b { font-size: 16px; font-weight: 500; line-height: 1.3; display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r-name b .i { width: 15px; height: 15px; color: var(--up); stroke-width: 2.4; }
+.r-name span, .r-val span:first-child { font-size: 14px; font-weight: 300; color: var(--gray); line-height: 1.35; white-space: nowrap; }
+.r-val { display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; }
+.r-val span:last-child { font-size: 14px; font-weight: 300; line-height: 1.35; white-space: nowrap; }
+.empty { padding: 26px 16px; color: var(--gray); font-size: 14px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.list-foot { display: flex; justify-content: center; padding: 6px 0 16px; }
+.review-top { display: flex; flex-direction: column; gap: 18px; }
+.review-grid { display: grid; gap: 22px; }
+.review-side { display: flex; flex-direction: column; gap: 22px; }
+
+/* detail (coin detail look) */
+.r-head { display: flex; align-items: center; gap: 14px; }
+.r-head .st { --s: 44px; }
+.r-head .h-name { flex: 1; min-width: 0; }
+.r-head .h-name b { display: block; font-size: 17px; font-weight: 500; }
+.r-head .h-name span { font-size: 14px; color: var(--gray); font-weight: 300; }
+.r-head .h-val { text-align: right; }
+.r-head .h-val b { display: block; font-size: 26px; font-weight: 300; font-variant-numeric: tabular-nums; }
+.r-head .h-val span { font-size: 14px; }
+.bs-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 10px; }
+.pill-btn { height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; border: 1px solid var(--ink); }
+.pill-btn .i { width: 18px; height: 18px; }
+.pill-btn.dark { background: var(--ink); color: var(--white); }
+.pill-btn.dark .i { color: var(--cyan); }
+.pill-btn.cyan { background: var(--cyan); }
+.pill-btn[aria-disabled="true"] { opacity: .4; cursor: not-allowed; }
+.mark-btn { height: 38px; border: 1px solid #CFD4D9; border-radius: 6px; display: grid; place-items: center; color: var(--black); }
+.mark-btn .i { width: 20px; height: 20px; }
+.mark-btn[aria-pressed="true"] { background: var(--upd-bg); border-color: var(--upd-bg); color: var(--upd-ink); }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.stat { background: var(--soft); border-radius: 10px; padding: 18px 16px 20px; min-width: 0; }
+.stat p { font-size: 13px; color: var(--gray); }
+.stat b { display: block; margin-top: 8px; font-size: 17px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.siblings { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.siblings b { font-weight: 500; }
 .siblings div { display: flex; justify-content: space-between; gap: 12px; }
-.detail-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.toggle-seen[aria-pressed="true"] { background: var(--upd-bg); border-color: var(--upd-bg); color: var(--upd-ink); }
-.plot { position: relative; height: 170px; margin: 8px 0 4px; }
-.plot .gl { position: absolute; left: 0; right: 0; border-top: 1px dashed #DCE1E7; }
+.pos { font-size: 12px; color: var(--muted); text-align: center; }
+
+/* chart */
+.plot { position: relative; height: 182px; }
+.plot .gl { position: absolute; left: 0; right: 0; border-top: 1px dashed #D5D5D5; }
+.plot .vl { position: absolute; top: 0; bottom: 0; right: 4.5%; border-left: 1px dashed #D5D5D5; }
 .plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.plot polyline { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.plot .lab { position: absolute; font-size: 12px; color: var(--muted); background: rgba(255, 255, 255, .9); padding: 0 4px; font-variant-numeric: tabular-nums; }
-.chart-note { font-size: 13px; color: var(--muted); }
+.plot polyline { fill: none; stroke: var(--purple); stroke-width: 2.2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.plot .mk { position: absolute; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; border-radius: 50%; border: 2px solid var(--purple); background: var(--white); }
+.plot .lab { position: absolute; font-size: 12px; color: var(--gray); background: rgba(255, 255, 255, .85); padding: 0 3px; font-variant-numeric: tabular-nums; }
+.ranges { display: flex; justify-content: space-around; padding: 0 13px; margin-top: 12px; }
+.ranges button { min-width: 56px; height: 26px; padding: 0 10px; border-radius: 6px; font-size: 13px; color: var(--muted); text-align: center; }
+.ranges button[aria-pressed="true"] { background: var(--soft); color: var(--black); font-weight: 500; }
+.chart-note { margin-top: 10px; font-size: 12px; color: var(--muted); text-align: center; }
 
-/* export */
-.export-grid { display: grid; gap: 18px; align-items: start; }
-.choice { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-ctl); cursor: pointer; }
-.choice:has(input:checked) { border-color: var(--text); background: var(--raised); }
-.choice input { margin: 4px 0 0; accent-color: var(--text); width: 16px; height: 16px; }
-.choice span { display: flex; flex-direction: column; min-width: 0; }
-.choice b { font-weight: 600; overflow-wrap: anywhere; }
-.choice small { font-size: 13px; color: var(--muted); }
-.done-art { width: min(300px, 100%); height: auto; align-self: center; }
+/* export (buy page look) */
+.buy { background: var(--cyan); margin: 0 calc(-1 * max(var(--gut), env(safe-area-inset-right, 0px))) 0 calc(-1 * max(var(--gut), env(safe-area-inset-left, 0px))); padding: 4px max(var(--gut), env(safe-area-inset-right, 0px)) 28px max(var(--gut), env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; min-height: calc(100vh - 70px - var(--tab-h)); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 5px 6px; background: var(--white); border-radius: 8px; margin-top: 16px; }
+.seg button { height: 40px; border-radius: 7px; font-size: 14px; text-align: center; }
+.seg button[aria-selected="true"] { background: var(--ink); color: var(--white); }
+.buy-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 24px 0 26px; flex-wrap: wrap; }
+.file-pill { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px 0 8px; border-radius: 19px; background: var(--white); font-size: 15px; max-width: 100%; min-width: 0; }
+.file-pill .st { --s: 24px; }
+.file-pill span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rate { font-size: 16px; }
+.amount { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; padding: 0 14px 0 20px; border-radius: 8px; font-size: 15px; }
+.amount.card { background: var(--white); }
+.amount + .amount { margin-top: 4px; }
+.amt { display: flex; align-items: baseline; gap: 6px; }
+.amt b { font-size: 30px; font-weight: 300; font-variant-numeric: tabular-nums; }
+.amt small { font-size: 12px; }
+.amt.alert b { color: var(--down); font-weight: 400; }
+.buy .notice { margin-top: 16px; }
+.save-note { margin-top: 12px; font-size: 13px; }
+.buy-spacer { flex: 1; min-height: 28px; }
+.done { display: flex; flex-direction: column; gap: 10px; }
+.done svg { width: min(300px, 82%); height: auto; align-self: center; margin: 4px 0 8px; }
+.done .lead b { font-weight: 600; color: var(--ink); }
+.done .lead b.down { color: var(--down); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.empty-block { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 24px 18px; border: 1px dashed var(--line-2); border-radius: 18px; color: var(--gray); }
 
-/* help */
-.help-list { display: flex; flex-direction: column; }
-.help-list div { padding: 12px 16px; border-bottom: 1px solid var(--rule); display: flex; flex-direction: column; gap: 2px; }
-.help-list div:last-child { border-bottom: 0; }
-.help-list b { font-weight: 600; }
-.help-list span { color: var(--muted); font-size: 14px; }
-.legend { display: flex; flex-wrap: wrap; gap: 8px; }
+/* help (profile look) */
+.me-card { display: flex; align-items: center; gap: 14px; padding: 16px 14px; border-radius: 18px; background: var(--ink); color: var(--white); }
+.me-card .st { --s: 46px; }
+.me-name { font-size: 16px; font-weight: 600; }
+.me-sub { font-size: 13px; color: var(--muted); }
+.settings { padding: 8px 0; }
+.set-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 16px; font-size: 15px; text-align: left; }
+.set-row > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.set-row small { font-size: 13px; color: var(--gray); }
+.set-row .i { width: 18px; height: 18px; stroke-width: 2; }
+button.set-row:hover { background: var(--soft); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 
 @media (min-width: 640px) {
-  .drop-grid { grid-template-columns: 1fr 1fr; }
-  .kpis { grid-template-columns: repeat(4, 1fr); }
-  .kpi { border-right: 1px solid var(--rule); box-shadow: none !important; }
-  .kpi:last-child { border-right: 0; }
+  .tiles .tile { min-height: 120px; }
 }
 @media (min-width: 960px) {
-  .welcome { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .welcome-art { min-height: 100vh; position: sticky; top: 0; padding: 48px; }
-  .welcome-body { align-self: center; padding: 48px 56px; }
-  .welcome h1 { font-size: 32px; }
-  .welcome-art svg { max-height: none; }
-  .shell { display: grid; grid-template-columns: 236px minmax(0, 1fr); }
-  .side { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 22px; padding: 20px 12px; background: var(--ground); border-right: 1px solid var(--border); }
-  .product { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
-  .product div { display: flex; flex-direction: column; min-width: 0; }
-  .product b { font-weight: 600; }
-  .product span { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .side nav, .side-foot { display: flex; flex-direction: column; gap: 2px; }
-  .side-foot { margin-top: auto; }
-  .nav { display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 0 10px; border-radius: var(--r-ctl); color: var(--text); font-size: 14px; }
-  .nav:hover { background: var(--raised); }
-  .nav[aria-current="page"] { background: var(--active); font-weight: 600; }
-  .nav .i { color: var(--muted); margin: 0 1px; }
-  .topbar, .tabbar { display: none; }
-  .view { padding: 28px 40px 56px; max-width: 1240px; gap: 20px; }
-  .desk { display: inline-flex !important; }
-  .phone { display: none !important; }
-  .review-grid { grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr); align-items: start; }
-  .review-side { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 18px; }
-  .export-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .welcome { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-rows: 1fr auto auto 1fr; grid-template-areas: "art ." "art top" "art body" "art ."; min-height: 100vh; padding: 0; column-gap: 64px; }
+  .welcome-art { position: sticky; top: 0; height: 100vh; background: var(--soft); align-items: center; padding: 40px !important; }
+  .welcome-art svg { width: min(460px, 82%); }
+  .welcome-top, .welcome-body { padding: 0 !important; width: min(440px, 100%); }
+  .welcome-body { padding-bottom: 40px !important; }
+  .welcome-actions { margin-top: 0; }
+  .shell { display: grid; grid-template-columns: 260px minmax(0, 1fr); }
+  .side { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 26px; padding: 30px 20px 26px; border-right: 1px solid var(--line); }
+  .side-logo .logo b { font-size: 21px; }
+  .side nav, .side-foot { display: flex; flex-direction: column; gap: 4px; }
+  .nav-item { display: flex; align-items: center; gap: 14px; height: 48px; padding: 0 14px; border-radius: 12px; color: var(--gray); font-size: 15px; }
+  .nav-item:hover { background: var(--soft); }
+  .nav-item[aria-current="page"] { color: var(--black); background: var(--soft); font-weight: 500; }
+  .nav-item .badge { margin-left: auto; }
+  .state { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--line-2); flex-shrink: 0; }
+  .state .i { width: 13px; height: 13px; stroke-width: 2.6; }
+  .state.done { background: var(--ink); border-color: var(--ink); color: var(--white); }
+  .state.current { border: 7px solid var(--cyan); }
+  .state.locked { border-style: dashed; }
+  .side-files { margin-top: auto; display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid var(--ink); border-radius: 18px; text-align: left; }
+  .side-files .sf-label { font-size: 12px; color: var(--muted); }
+  .side-files b { font-size: 13px; font-weight: 500; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .side-files > span { min-width: 0; }
+  .tabbar, .phone, .top-mark { display: none !important; }
+  .desk { display: flex !important; }
+  .view { padding: 8px 48px 56px; max-width: 1220px; gap: 20px; }
+  .topbar { display: flex; gap: 16px; padding: 22px 0 6px; }
+  .top-title { text-align: left; font-size: 26px; flex: 1; }
+  .upload-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: start; }
+  .cards-art { display: flex; align-items: center; justify-content: center; position: sticky; top: 24px; height: 440px; border-radius: 24px; background: var(--soft); overflow: hidden; }
+  .cards-hero { position: relative; width: 520px; height: 440px; flex: none; transform: scale(.82); }
+  .sheet-card { position: absolute; width: 340px; height: 214px; border-radius: 22px; background: linear-gradient(150deg, #3b3b3b 0%, #1c1c1c 45%, #0c0c0c 100%); box-shadow: -4px 5px 0 0 var(--cyan), -30px 50px 40px -10px rgba(0, 0, 0, .22); transform: rotateX(60deg) rotateZ(-28deg); color: #fff; }
+  .sheet-card b { position: absolute; left: 36px; top: 30px; font-size: 20px; font-weight: 600; letter-spacing: 3px; }
+  .sheet-card span { position: absolute; left: 36px; bottom: 40px; font-size: 22px; letter-spacing: 4px; word-spacing: 14px; }
+  .sheet-card .i { position: absolute; top: 28px; right: 30px; width: 28px; height: 28px; stroke-width: 1.8; }
+  .sheet-card.c1 { left: 190px; top: 70px; }
+  .sheet-card.c2 { left: -20px; top: 190px; }
+  .review-grid { grid-template-columns: minmax(0, 1.25fr) minmax(340px, 1fr); align-items: start; gap: 32px; }
+  .review-top { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(340px, 1fr); gap: 32px; align-items: end; }
+  .review-side { position: sticky; top: 20px; }
+  .buy { margin: 12px auto 0; width: min(560px, 100%); border-radius: 24px; padding: 8px 28px 28px; min-height: 0; }
+  .help-wrap { max-width: 680px; }
 }
 @media (max-width: 959px) {
   .review-side .detail-panel { display: none; }
+  #v-export:has(#export-body:not([hidden])) { background: var(--cyan); min-height: 100vh; }
+}
+@media (max-width: 380px) {
+  .bal-amount { font-size: 40px; }
+  .display { font-size: 30px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation-duration: 3s !important; } }
 </style>
 
 <svg width="0" height="0" style="position: absolute" aria-hidden="true">
-  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
-  <symbol id="i-review" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></symbol>
-  <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
-  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/></symbol>
-  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
-  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
-  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
-  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
-  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
-  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></symbol>
-  <symbol id="i-files" viewBox="0 0 24 24"><path d="M15 3H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7z"/><path d="M15 3v4h4"/><path d="M3 8v11a2 2 0 0 0 2 2h9"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6 3 8.5 3 8.5H3S6 15 6 9"/><path d="M10.2 21a2 2 0 0 0 3.6 0"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4.5-4.5"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+  <symbol id="i-review" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6.5"/><path d="M16 7.5h4V11"/></symbol>
+  <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7M9 12h5"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8M8 17h5"/></symbol>
+  <symbol id="i-sheet" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></symbol>
+  <symbol id="i-pick" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M12 11v6M9 14h6"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M17 7 7 17M7 9v8h8"/></symbol>
+  <symbol id="i-ur" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></symbol>
-  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
-  <symbol id="mark" viewBox="0 0 28 28"><path d="M3 5.5A2.5 2.5 0 0 1 5.5 3h9.2c.7 0 1.3.3 1.8.7l8.8 8.8a2.5 2.5 0 0 1 0 3.5l-8.5 8.5a2.5 2.5 0 0 1-3.5 0l-8.8-8.8a2.5 2.5 0 0 1-.7-1.8z" fill="#0369A1" stroke="none"/><circle cx="8.5" cy="8.5" r="2" fill="#FFFFFF" stroke="none"/><path d="M11.6 16.8a4.2 4.2 0 0 1 7-3.1M19.6 15.2a4.2 4.2 0 0 1-7 3.1" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/><path d="m18.9 11.6-.3 2.1-2.1-.3M12.3 20.4l.3-2.1 2.1.3" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="sheet-ico" viewBox="0 0 44 52"><path d="M4 2h26l12 12v34a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1.5"/><path d="M30 2v10a2 2 0 0 0 2 2h10" fill="#EEF2F6" stroke="#C9D1DB" stroke-width="1.5"/><path d="M9 24h26M9 31h26M9 38h26M19 18v26" stroke="#C9D1DB" stroke-width="1.5"/></symbol>
-  <symbol id="sheet-ok" viewBox="0 0 44 52"><path d="M4 2h26l12 12v34a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="#FFFFFF" stroke="#0369A1" stroke-width="1.5"/><path d="M30 2v10a2 2 0 0 0 2 2h10" fill="#E2F0F9" stroke="#0369A1" stroke-width="1.5"/><rect x="9" y="22" width="26" height="6" rx="1" fill="#C6EFCE"/><rect x="9" y="31" width="26" height="6" rx="1" fill="#BDD7EE"/><rect x="9" y="40" width="12" height="6" rx="1" fill="#FFFF96"/></symbol>
+  <symbol id="i-UPDATED" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="i-ADDED" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+  <symbol id="i-UNCHANGED" viewBox="0 0 24 24"><path d="M6 9h12M6 15h12"/></symbol>
+  <symbol id="i-REVIEW" viewBox="0 0 24 24"><path d="M12 7v6M12 17h.01"/></symbol>
+  <symbol id="mark" viewBox="0 0 32 32"><path d="M4 7a3 3 0 0 1 3-3h10.2c.8 0 1.6.3 2.1.9l8.8 8.8a3 3 0 0 1 0 4.2l-8.6 8.6a3 3 0 0 1-4.2 0l-8.8-8.8A3 3 0 0 1 4 17.2z" fill="#82E9FF" stroke="#222222" stroke-width="2"/><circle cx="10" cy="10" r="2.2" fill="#FFFFFF" stroke="#222222" stroke-width="1.8"/><path d="M13.6 19.4a4.6 4.6 0 0 1 7.8-3.6M22 17.8a4.6 4.6 0 0 1-7.8 3.6" fill="none" stroke="#222222" stroke-width="2" stroke-linecap="round"/><path d="m21.6 13.4-.2 2.4-2.4-.3M14.6 24l.2-2.4 2.4.3" fill="none" stroke="#222222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
 
-<!-- welcome: the only screen with a picture besides the finished export -->
+<!-- welcome (onboarding) -->
 <section class="welcome" id="v-welcome" hidden>
+  <div class="welcome-top"><span class="logo" role="img" aria-label="PriceSync Tracker"><svg aria-hidden="true"><use href="#mark"/></svg><b>PRICESYNC<span> TRACKER</span></b></span></div>
   <div class="welcome-art">
-    <svg viewBox="0 0 480 400" role="img" aria-label="Hai bảng giá ghép thành một file upload">
-      <g font-family="Be Vietnam Pro, Segoe UI, sans-serif">
-        <rect x="28" y="58" width="168" height="128" rx="12" fill="#FFFFFF"/>
-        <rect x="28" y="58" width="168" height="30" rx="12" fill="#CFE3F1"/><rect x="28" y="76" width="168" height="12" fill="#CFE3F1"/>
-        <text x="44" y="78" font-size="13" font-weight="600" fill="#0F1720">Formula</text>
-        <g fill="#DCE3EA"><rect x="44" y="102" width="44" height="8" rx="4"/><rect x="100" y="102" width="80" height="8" rx="4"/><rect x="44" y="124" width="44" height="8" rx="4"/><rect x="100" y="124" width="64" height="8" rx="4"/><rect x="44" y="146" width="44" height="8" rx="4"/><rect x="100" y="146" width="72" height="8" rx="4"/><rect x="44" y="166" width="44" height="8" rx="4"/></g>
-        <rect x="28" y="214" width="168" height="128" rx="12" fill="#FFFFFF"/>
-        <rect x="28" y="214" width="168" height="30" rx="12" fill="#CFE3F1"/><rect x="28" y="232" width="168" height="12" fill="#CFE3F1"/>
-        <text x="44" y="234" font-size="13" font-weight="600" fill="#0F1720">Template</text>
-        <g fill="#DCE3EA"><rect x="44" y="258" width="44" height="8" rx="4"/><rect x="44" y="280" width="44" height="8" rx="4"/><rect x="44" y="302" width="44" height="8" rx="4"/><rect x="44" y="322" width="44" height="8" rx="4"/></g>
-        <g fill="#0369A1"><rect x="100" y="258" width="52" height="8" rx="4"/><rect x="100" y="280" width="66" height="8" rx="4"/><rect x="100" y="302" width="44" height="8" rx="4"/></g>
-        <path d="M200 122c34 0 40 50 74 50" fill="none" stroke="#0369A1" stroke-width="3" stroke-linecap="round"/>
-        <path d="M200 278c34 0 40-50 74-50" fill="none" stroke="#0369A1" stroke-width="3" stroke-linecap="round"/>
-        <path d="m266 164 10 8-10 8M266 220l10 8-10 8" fill="none" stroke="#0369A1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <rect x="284" y="88" width="168" height="226" rx="14" fill="#FFFFFF"/>
-        <rect x="284" y="88" width="168" height="34" rx="14" fill="#0369A1"/><rect x="284" y="108" width="168" height="14" fill="#0369A1"/>
-        <text x="300" y="111" font-size="13" font-weight="600" fill="#FFFFFF">Directo_Upload</text>
-        <rect x="298" y="136" width="140" height="22" rx="5" fill="#C6EFCE"/><rect x="298" y="166" width="140" height="22" rx="5" fill="#EEF2F6"/><rect x="298" y="196" width="140" height="22" rx="5" fill="#BDD7EE"/><rect x="298" y="226" width="140" height="22" rx="5" fill="#EEF2F6"/><rect x="298" y="256" width="140" height="22" rx="5" fill="#C6EFCE"/>
-        <rect x="298" y="286" width="44" height="16" rx="4" fill="#FFFF96"/>
-        <text x="308" y="151" font-size="11" fill="#1C5A2B">A10234</text><text x="428" y="151" font-size="11" fill="#1C5A2B" text-anchor="end">11,29</text>
-        <text x="308" y="211" font-size="11" fill="#153D63">B20877</text><text x="428" y="211" font-size="11" fill="#153D63" text-anchor="end">21,00</text>
-        <text x="308" y="271" font-size="11" fill="#1C5A2B">C30551</text><text x="428" y="271" font-size="11" fill="#1C5A2B" text-anchor="end">8,50</text>
-        <circle cx="440" cy="314" r="30" fill="#141A21"/>
-        <path d="M426 314l9 9 18-19" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-        <g transform="rotate(-12 236 70)"><path d="M206 52h54l14 18-14 18h-54a6 6 0 0 1-6-6V58a6 6 0 0 1 6-6z" fill="#FFFFFF" stroke="#0369A1" stroke-width="2"/><circle cx="263" cy="70" r="3.5" fill="#0369A1"/><text x="212" y="76" font-size="15" font-weight="600" fill="#0F1720">10,00</text></g>
-        <g transform="rotate(8 236 360)"><path d="M206 342h54l14 18-14 18h-54a6 6 0 0 1-6-6v-24a6 6 0 0 1 6-6z" fill="#0369A1"/><circle cx="263" cy="360" r="3.5" fill="#FFFFFF"/><text x="212" y="366" font-size="15" font-weight="600" fill="#FFFFFF">11,29</text></g>
+    <svg viewBox="0 0 330 300" role="img" aria-label="Hai bảng giá ghép thành một file upload, nét vẽ đen trên nền trắng và xanh ngọc">
+      <g font-family="Be Vietnam Pro, Segoe UI, sans-serif" stroke="#222222" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+        <ellipse cx="170" cy="284" rx="146" ry="9" fill="#E8E8E8" stroke="none"/>
+        <rect x="22" y="56" width="124" height="96" rx="8" fill="#FFFFFF"/>
+        <path d="M22 78h124M22 100h124M22 122h124M62 56v96" fill="none" stroke-width="1"/>
+        <text x="30" y="72" font-size="11" font-weight="700" fill="#222222" stroke="none" letter-spacing="1">FORMULA</text>
+        <rect x="22" y="172" width="124" height="96" rx="8" fill="#FFFFFF"/>
+        <path d="M22 194h124M22 216h124M22 238h124M62 172v96" fill="none" stroke-width="1"/>
+        <rect x="63" y="195" width="83" height="21" fill="#82E9FF" stroke="none"/><rect x="63" y="217" width="83" height="21" fill="#82E9FF" stroke="none"/>
+        <path d="M22 194h124M22 216h124M22 238h124M62 172v96" fill="none" stroke-width="1"/>
+        <rect x="22" y="172" width="124" height="96" rx="8" fill="none"/>
+        <text x="30" y="188" font-size="11" font-weight="700" fill="#222222" stroke="none" letter-spacing="1">TEMPLATE</text>
+        <path d="M150 104c30 0 34 46 58 46" fill="none"/><path d="m200 143 9 7-9 7" fill="none"/>
+        <path d="M150 220c30 0 34-46 58-46" fill="none"/><path d="m200 167 9 7-9 7" fill="none"/>
+        <rect x="214" y="72" width="100" height="186" rx="10" fill="#FFFFFF"/>
+        <rect x="214" y="72" width="100" height="26" rx="10" fill="#222222"/><rect x="214" y="88" width="100" height="10" fill="#222222"/>
+        <text x="223" y="89" font-size="9.5" font-weight="700" fill="#82E9FF" stroke="none" letter-spacing=".6">UPLOAD</text>
+        <rect x="224" y="108" width="80" height="18" rx="4" fill="#C6EFCE" stroke-width="1.2"/>
+        <rect x="224" y="132" width="80" height="18" rx="4" fill="#F6F6F6" stroke-width="1.2"/>
+        <rect x="224" y="156" width="80" height="18" rx="4" fill="#BDD7EE" stroke-width="1.2"/>
+        <rect x="224" y="180" width="80" height="18" rx="4" fill="#F6F6F6" stroke-width="1.2"/>
+        <rect x="224" y="204" width="80" height="18" rx="4" fill="#C6EFCE" stroke-width="1.2"/>
+        <rect x="224" y="228" width="30" height="14" rx="3" fill="#FFFF96" stroke-width="1.2"/>
+        <circle cx="306" cy="252" r="22" fill="#82E9FF"/>
+        <path d="M296 252l7 7 13-14" fill="none" stroke-width="3.2"/>
+        <g transform="rotate(-14 176 40)"><path d="M150 26h48l12 14-12 14h-48a5 5 0 0 1-5-5V31a5 5 0 0 1 5-5z" fill="#FFFFFF"/><circle cx="200" cy="40" r="3" fill="#FFFFFF"/><text x="153" y="45" font-size="13" font-weight="600" fill="#222222" stroke="none">10,00</text></g>
+        <g transform="rotate(10 186 268)"><path d="M160 254h48l12 14-12 14h-48a5 5 0 0 1-5-5v-18a5 5 0 0 1 5-5z" fill="#82E9FF"/><circle cx="210" cy="268" r="3" fill="#FFFFFF"/><text x="163" y="273" font-size="13" font-weight="600" fill="#222222" stroke="none">11,29</text></g>
+        <circle cx="96" cy="20" r="7" fill="#FFFFFF"/><circle cx="292" cy="40" r="10" fill="#FFFFFF"/><path d="M287 40h10M292 35v10" fill="none"/>
       </g>
     </svg>
   </div>
   <div class="welcome-body">
-    <span class="brand"><svg class="mark" aria-hidden="true"><use href="#mark"/></svg>PriceSync Tracker</span>
-    <h1>Đưa giá mới lên Directo, không sót dòng nào</h1>
-    <p class="statement">Ghép file formula với file template, xem từng thay đổi trước khi upload, rồi tải về file Directo_Upload.xlsx.</p>
+    <h1 class="display">Giá mới lên Directo, không sót dòng nào</h1>
+    <p class="lead">Ghép file formula với file template, kiểm tra từng thay đổi, rồi tải về file Directo_Upload.xlsx.</p>
     <ol class="flow">
-      <li><b>Tải file</b><span>File formula và file template của kỳ khuyến mãi</span></li>
-      <li><b>Kiểm tra</b><span>Mã đổi giá, mã thêm mới và các dòng cần xem lại</span></li>
-      <li><b>Xuất file</b><span>Tải về file upload đúng mẫu Directo</span></li>
+      <li><b>1</b><span><strong>Tải file</strong> · formula và template của kỳ khuyến mãi</span></li>
+      <li><b>2</b><span><strong>Kiểm tra</strong> · mã đổi giá, mã mới, dòng cần xem lại</span></li>
+      <li><b>3</b><span><strong>Xuất file</strong> · tải về file upload cho Directo</span></li>
     </ol>
-    <div><button class="btn primary lg" data-act="start">Bắt đầu<svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg></button></div>
-    <p class="fine">File được đọc và xử lý ngay trong trình duyệt của bạn. File gốc không bị sửa.</p>
+    <div class="dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+    <div class="welcome-actions">
+      <button class="btn btn-cyan" data-act="start">Bắt đầu</button>
+      <p class="fine">File được xử lý ngay trong trình duyệt. File gốc không bị sửa.</p>
+    </div>
   </div>
 </section>
 
 <div class="shell" id="shell" hidden>
   <aside class="side" aria-label="Các bước">
-    <div class="product"><svg class="mark" aria-hidden="true"><use href="#mark"/></svg><div><b>PriceSync Tracker</b><span id="scope">Chưa chọn file</span></div></div>
+    <div class="side-logo"><span class="logo" role="img" aria-label="PriceSync Tracker"><svg aria-hidden="true"><use href="#mark"/></svg><b>PRICESYNC</b></span></div>
     <nav aria-label="Các bước">
-      <button class="nav" data-go="upload" data-nav="upload"><span class="state" data-step="upload"></span>Tải file</button>
-      <button class="nav" data-go="review" data-nav="review"><span class="state" data-step="review"></span>Kiểm tra<span class="count" data-count hidden></span></button>
-      <button class="nav" data-go="export" data-nav="export"><span class="state" data-step="export"></span>Xuất file</button>
+      <button class="nav-item" data-go="upload" data-nav="upload"><span class="state" data-step="upload"></span>Tải file</button>
+      <button class="nav-item" data-go="review" data-nav="review"><span class="state" data-step="review"></span>Kiểm tra<span class="badge" data-count hidden></span></button>
+      <button class="nav-item" data-go="export" data-nav="export"><span class="state" data-step="export"></span>Xuất file</button>
     </nav>
+    <button class="side-files" data-go="upload" id="side-files"></button>
     <div class="side-foot">
-      <button class="nav" data-go="help" data-nav="help"><svg class="i" aria-hidden="true"><use href="#i-help"/></svg>Hướng dẫn</button>
-      <button class="nav" data-act="reset"><svg class="i" aria-hidden="true"><use href="#i-reset"/></svg>Làm lượt mới</button>
+      <button class="nav-item" data-go="help" data-nav="help"><svg class="i" aria-hidden="true"><use href="#i-help"/></svg>Hướng dẫn</button>
+      <button class="nav-item" data-act="reset"><svg class="i" aria-hidden="true"><use href="#i-reset"/></svg>Làm lượt mới</button>
     </div>
   </aside>
 
   <main>
-    <header class="topbar"><svg class="mark" aria-hidden="true"><use href="#mark"/></svg><b>PriceSync Tracker</b><button class="icon-btn" data-act="reset" aria-label="Làm lượt mới"><svg class="i"><use href="#i-reset"/></svg></button></header>
-
+    <!-- step 1 -->
     <section class="view" id="v-upload" hidden>
-      <div class="title-row">
-        <div><h1>Tải file</h1><p class="finding" id="upload-finding"></p></div>
-        <button class="btn primary desk" data-act="preview">Kiểm tra thay đổi<svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+      <header class="topbar">
+        <span class="top-mark"><svg aria-hidden="true"><use href="#mark"/></svg></span>
+        <h1 class="top-title">Tải file</h1>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+      </header>
+      <div class="upload-grid">
+        <div class="form">
+          <h2 class="headline">Chọn 2 file Excel</h2>
+          <p class="finding" id="upload-finding"></p>
+          <input type="file" id="file-input" accept=".xlsx" hidden>
+          <input type="file" id="pair-input" accept=".xlsx" multiple hidden>
+          <div id="field-formula" data-role="formula"></div>
+          <div id="field-template" data-role="template"></div>
+          <div class="form-row"><span>Kéo thả file vào ô cũng được</span><button type="button" class="link" data-act="swap">Đổi chỗ 2 file</button></div>
+          <button class="btn btn-cyan" data-act="preview">Kiểm tra thay đổi</button>
+          <button class="btn btn-outline" data-act="pick-pair"><svg class="i" aria-hidden="true"><use href="#i-pick"/></svg>Chọn cả 2 file cùng lúc</button>
+          <p class="foot">Nếu file đang mở trong Excel, hãy lưu lại trước khi chọn. <button type="button" class="link" data-go="help">Xem cách đọc file</button></p>
+        </div>
+        <div class="cards-art" aria-hidden="true">
+          <div class="cards-hero">
+            <div class="sheet-card c1"><b>TEMPLATE</b><svg class="i"><use href="#i-sheet"/></svg><span>26 · B C D E</span></div>
+            <div class="sheet-card c2"><b>FORMULA</b><svg class="i"><use href="#i-sheet"/></svg><span>B C H I</span></div>
+          </div>
+        </div>
       </div>
-      <input type="file" id="file-input" accept=".xlsx" hidden>
-      <input type="file" id="pair-input" accept=".xlsx" multiple hidden>
-      <div class="drop-grid">
-        <div class="drop" id="drop-formula" data-role="formula"></div>
-        <div class="drop" id="drop-template" data-role="template"></div>
-      </div>
-      <div class="upload-actions">
-        <button class="btn secondary" data-act="pick-pair"><svg class="i" aria-hidden="true"><use href="#i-files"/></svg>Chọn cả 2 file cùng lúc</button>
-        <button class="link" data-act="swap"><svg class="i" aria-hidden="true"><use href="#i-swap"/></svg>Đổi chỗ 2 file</button>
-      </div>
-      <p class="fine">Kéo thả file vào ô cũng được. Nếu file đang mở trong Excel, hãy lưu lại trước khi chọn.</p>
-      <button class="btn primary lg block phone" data-act="preview">Kiểm tra thay đổi<svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg></button>
     </section>
 
+    <!-- step 2 -->
     <section class="view" id="v-review" hidden>
-      <div class="title-row">
-        <div><h1>Kiểm tra</h1><p class="finding" id="review-finding"></p></div>
-        <button class="btn primary desk" data-go="export" id="to-export">Tiếp tục xuất file<svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg></button>
-      </div>
-      <div class="empty-frame" id="review-empty" hidden>
+      <header class="topbar">
+        <span class="top-mark"><svg aria-hidden="true"><use href="#mark"/></svg></span>
+        <h1 class="top-title">Kiểm tra</h1>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+      </header>
+      <div class="empty-block" id="review-empty" hidden>
         <p>Chưa có gì để kiểm tra. Tải file formula và file template trước.</p>
-        <button class="btn primary" data-go="upload"><svg class="i" aria-hidden="true"><use href="#i-upload"/></svg>Đi tới Tải file</button>
+        <button class="btn btn-dark sm" data-go="upload">Đi tới Tải file</button>
       </div>
-      <div class="review-body" id="review-body">
-        <div class="panel sync" id="sync"></div>
-        <div class="panel kpis" role="tablist" aria-label="Lọc danh sách" id="kpis"></div>
-        <div class="review-grid">
-          <div class="panel">
-            <div class="list-head">
-              <h2 id="list-title"></h2>
-              <label class="search"><svg class="i" aria-hidden="true"><use href="#i-search"/></svg><span class="sr-only">Tìm mã sản phẩm</span><input id="q" type="search" placeholder="Tìm mã sản phẩm" autocomplete="off"></label>
+      <div class="view-body" id="review-body" style="display: flex; flex-direction: column; gap: 22px">
+        <div class="review-top">
+          <div style="display: flex; flex-direction: column; gap: 18px; min-width: 0">
+            <button class="who" data-go="upload" id="who"></button>
+            <div>
+              <p class="bal-label">Dòng sẽ upload</p>
+              <div class="bal-row"><p class="bal-amount" id="total"></p><p class="bal-delta" id="delta"></p></div>
+              <p class="finding" id="review-finding"></p>
             </div>
-            <div id="rows"></div>
+          </div>
+          <div class="tiles">
+            <button class="tile dark" data-act="issues"><svg class="i" aria-hidden="true"><use href="#i-dl"/></svg><span>Cần xem lại<small id="tile-review"></small></span></button>
+            <button class="tile cyan" data-go="export"><svg class="i" aria-hidden="true"><use href="#i-ur"/></svg><span>Xuất file<small id="tile-export"></small></span></button>
+          </div>
+        </div>
+        <div class="review-grid">
+          <div style="display: flex; flex-direction: column; gap: 16px; min-width: 0">
+            <div class="tabs" role="tablist" aria-label="Lọc danh sách" id="tabs"></div>
+            <label class="search"><svg class="i" aria-hidden="true"><use href="#i-search"/></svg><span class="sr-only">Tìm mã sản phẩm</span><input id="q" type="search" placeholder="Tìm mã sản phẩm" autocomplete="off"></label>
+            <div class="panel"><div class="rowlist" id="rows"></div></div>
           </div>
           <div class="review-side">
-            <div class="panel detail-panel" id="detail-panel"></div>
+            <div class="panel detail-panel"><div class="panel-body" id="detail-panel"></div></div>
             <div class="panel">
-              <div class="panel-head"><h2>Mức đổi giá</h2><span class="fine" id="chart-sub"></span></div>
+              <div class="panel-head"><h2>Mức đổi giá</h2><span class="gray" style="font-size: 13px" id="chart-sub"></span></div>
               <div class="panel-body" id="chart"></div>
             </div>
           </div>
@@ -373,70 +486,98 @@ h2 { font-size: 16px; font-weight: 600; }
     </section>
 
     <section class="view" id="v-detail" hidden>
-      <div><button class="link" data-go="review"><svg class="i" aria-hidden="true"><use href="#i-back"/></svg>Danh sách</button></div>
-      <div class="panel" id="detail-phone"></div>
+      <header class="topbar">
+        <button class="back" data-go="review" aria-label="Về danh sách"><svg class="i"><use href="#i-back"/></svg></button>
+        <h1 class="top-title" id="detail-title"></h1>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+      </header>
+      <div class="panel-body" style="padding: 0" id="detail-phone"></div>
     </section>
 
+    <!-- step 3 -->
     <section class="view" id="v-export" hidden>
-      <div class="title-row"><div><h1>Xuất file</h1><p class="finding" id="export-finding"></p></div></div>
-      <div class="empty-frame" id="export-empty" hidden>
+      <header class="topbar">
+        <span class="top-mark"><svg aria-hidden="true"><use href="#mark"/></svg></span>
+        <h1 class="top-title">Xuất file</h1>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+      </header>
+      <div class="empty-block" id="export-empty" hidden>
         <p>Chưa có file để xuất. Tải 2 file và kiểm tra thay đổi trước.</p>
-        <button class="btn primary" data-go="upload"><svg class="i" aria-hidden="true"><use href="#i-upload"/></svg>Đi tới Tải file</button>
+        <button class="btn btn-dark sm" data-go="upload">Đi tới Tải file</button>
       </div>
-      <div class="export-grid" id="export-body">
-        <div class="panel">
-          <div class="panel-head"><h2>Tên file</h2></div>
-          <div class="panel-body">
-            <label class="choice"><input type="radio" name="fname" value="plain" checked><span><b>Directo_Upload.xlsx</b><small>Tên chuẩn để import vào Directo</small></span></label>
-            <label class="choice"><input type="radio" name="fname" value="dated"><span><b id="dated-name"></b><small>Thêm ngày hôm nay để không ghi đè file cũ</small></span></label>
-            <div id="export-warn"></div>
-            <button class="btn primary lg block" data-act="save" id="save-btn"><svg class="i" aria-hidden="true"><use href="#i-export"/></svg>Tải file xuống</button>
-            <p class="fine" id="save-note"></p>
+      <div class="buy" id="export-body">
+        <div id="export-form">
+          <div class="seg" role="tablist" aria-label="Tên file">
+            <button role="tab" data-act="name-mode" data-mode="plain" aria-selected="true">Tên gốc</button>
+            <button role="tab" data-act="name-mode" data-mode="dated" aria-selected="false">Thêm ngày vào tên</button>
           </div>
+          <div class="buy-row">
+            <span class="file-pill"><span class="st"><svg class="i" aria-hidden="true"><use href="#i-sheet"/></svg></span><span id="export-name"></span></span>
+            <p class="rate" id="export-total"></p>
+          </div>
+          <div class="amount card"><span>Đổi giá</span><span class="amt"><b id="ex-upd"></b><small>dòng</small></span></div>
+          <div class="amount"><span>Thêm mới</span><span class="amt"><b id="ex-add"></b><small>dòng</small></span></div>
+          <div class="amount"><span>Không đổi</span><span class="amt"><b id="ex-same"></b><small>dòng</small></span></div>
+          <div class="amount"><span>Cần xem lại</span><span class="amt" id="ex-rev-wrap"><b id="ex-rev"></b><small>dòng</small></span></div>
+          <div id="export-warn"></div>
+          <p class="save-note" id="save-note"></p>
+          <div class="buy-spacer"></div>
+          <button class="btn btn-dark" data-act="save"><svg class="i" aria-hidden="true"><use href="#i-export"/></svg>Tải file xuống</button>
         </div>
-        <div class="panel">
-          <div class="panel-head"><h2>Trong file</h2></div>
-          <div class="panel-body"><dl class="facts" id="export-facts"></dl></div>
-        </div>
-      </div>
-      <div class="panel" id="export-done" hidden>
-        <div class="panel-body" style="align-items: center; text-align: center; padding: 28px 20px">
-          <svg class="done-art" viewBox="0 0 300 200" role="img" aria-label="File upload đã tạo xong">
-            <rect x="96" y="14" width="108" height="140" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="2"/>
-            <rect x="96" y="14" width="108" height="26" rx="10" fill="#0369A1"/><rect x="96" y="30" width="108" height="10" fill="#0369A1"/>
-            <rect x="110" y="52" width="80" height="12" rx="3" fill="#C6EFCE"/><rect x="110" y="72" width="80" height="12" rx="3" fill="#EEF2F6"/><rect x="110" y="92" width="80" height="12" rx="3" fill="#BDD7EE"/><rect x="110" y="112" width="80" height="12" rx="3" fill="#EEF2F6"/><rect x="110" y="132" width="34" height="10" rx="3" fill="#FFFF96"/>
-            <circle cx="204" cy="150" r="30" fill="#1F7A4D"/><path d="M190 150l10 10 18-20" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M40 186h220" stroke="#E1E6EC" stroke-width="2" stroke-linecap="round"/>
-            <g fill="#0369A1"><circle cx="64" cy="58" r="4"/><circle cx="244" cy="40" r="3"/><circle cx="56" cy="128" r="3"/></g>
+        <div class="done" id="export-done" hidden>
+          <svg viewBox="0 0 320 230" role="img" aria-label="File upload đã tải xong">
+            <g stroke="#222222" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+              <ellipse cx="160" cy="218" rx="120" ry="8" fill="#6FD8EE" stroke="none"/>
+              <path d="M104 18h82l30 30v150a6 6 0 0 1-6 6H104a6 6 0 0 1-6-6V24a6 6 0 0 1 6-6z" fill="#FFFFFF"/>
+              <path d="M186 18v24a6 6 0 0 0 6 6h24" fill="#F6F6F6"/>
+              <rect x="114" y="64" width="88" height="16" rx="4" fill="#C6EFCE" stroke-width="1.2"/>
+              <rect x="114" y="88" width="88" height="16" rx="4" fill="#F6F6F6" stroke-width="1.2"/>
+              <rect x="114" y="112" width="88" height="16" rx="4" fill="#BDD7EE" stroke-width="1.2"/>
+              <rect x="114" y="136" width="88" height="16" rx="4" fill="#F6F6F6" stroke-width="1.2"/>
+              <rect x="114" y="160" width="40" height="14" rx="3" fill="#FFFF96" stroke-width="1.2"/>
+              <circle cx="214" cy="170" r="32" fill="#222222"/>
+              <path d="M200 170l10 10 18-20" fill="none" stroke="#82E9FF" stroke-width="5"/>
+              <circle cx="66" cy="60" r="8" fill="#FFFFFF"/><circle cx="262" cy="48" r="6" fill="#FFFFFF"/><path d="M58 150h14M65 143v14" fill="none"/>
+            </g>
           </svg>
-          <h2 style="font-size: 20px" id="done-title"></h2>
-          <p class="muted" id="done-text"></p>
-          <div class="upload-actions" style="justify-content: center">
-            <button class="btn primary" data-act="save"><svg class="i" aria-hidden="true"><use href="#i-export"/></svg>Tải lại</button>
-            <button class="btn secondary" data-act="reset"><svg class="i" aria-hidden="true"><use href="#i-reset"/></svg>Làm lượt mới</button>
+          <h2 class="display" style="font-size: 30px">Đã tải file upload!</h2>
+          <p class="lead" id="done-text"></p>
+          <div class="welcome-actions" style="padding-top: 18px">
+            <button class="btn btn-dark" data-act="save"><svg class="i" aria-hidden="true"><use href="#i-export"/></svg>Tải lại</button>
+            <div class="pair">
+              <button class="btn btn-outline" data-act="reset">Làm lượt mới</button>
+              <button class="btn btn-outline" data-go="review">Về kiểm tra</button>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
     <section class="view" id="v-help" hidden>
-      <div class="title-row"><div><h1>Hướng dẫn</h1><p class="finding">Cách PriceSync Tracker đọc 2 file và tạo file upload.</p></div></div>
-      <div class="panel help-list">
-        <div><b>File formula</b><span>Sheet đầu tiên. Cột B là mã, C giá, H và I ngày bắt đầu, ngày kết thúc. Dữ liệu từ dòng 2.</span></div>
-        <div><b>File template</b><span>Sheet đang mở khi lưu file. Đọc cột B–E từ dòng 26: mã, giá mới, ngày bắt đầu, ngày kết thúc.</span></div>
-        <div><b>Ghép dòng</b><span>Cùng mã và cùng kỳ khuyến mãi thì cập nhật giá. Khác kỳ thì thêm dòng mới. Dòng trùng hoàn toàn được bỏ bớt. File formula trắng (chỉ có dòng tiêu đề) thì toàn bộ dòng template được điền vào, cột E là Static và cột F là 2.</span></div>
-        <div><b>Giá và ngày</b><span>Giá làm tròn 2 số lẻ (11,285 thành 11,29). Ngày ở mọi kiểu gõ được đưa về dd.mm.yyyy.</span></div>
-        <div><b>Cần xem lại</b><span>Mã có nhiều giá trong cùng kỳ (liên hệ PIC) và dòng có ngày kết thúc trước ngày bắt đầu. Các dòng này vẫn nằm trong file và được ghi ở sheet Report.</span></div>
-        <div><b>Màu trong file Excel</b><span class="legend"><span class="pill UPDATED">Đổi giá</span><span class="pill ADDED">Thêm mới</span><span class="pill REVIEW">Mã lặp lại</span></span></div>
-        <div><b>Dữ liệu của bạn</b><span>File được đọc và xử lý ngay trong trình duyệt. File gốc không bị sửa.</span></div>
+      <header class="topbar">
+        <span class="top-mark"><svg aria-hidden="true"><use href="#mark"/></svg></span>
+        <h1 class="top-title">Hướng dẫn</h1>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+      </header>
+      <div class="help-wrap" style="display: flex; flex-direction: column; gap: 22px">
+        <div class="me-card"><span class="st cyan"><svg class="i" aria-hidden="true"><use href="#i-sheet"/></svg></span><div><p class="me-name">PriceSync Tracker</p><p class="me-sub">Đọc 2 file Excel ngay trong trình duyệt và tạo Directo_Upload.xlsx. File gốc không bị sửa.</p></div></div>
+        <div class="panel settings">
+          <div class="set-row"><span>File formula<small>Sheet đầu tiên. Cột B mã, C giá, H và I ngày bắt đầu, kết thúc. File trắng chỉ có dòng tiêu đề cũng được.</small></span></div>
+          <div class="set-row"><span>File template<small>Sheet đang mở khi lưu file. Đọc cột B–E từ dòng 26: mã, giá mới, ngày bắt đầu, ngày kết thúc.</small></span></div>
+          <div class="set-row"><span>Ghép dòng<small>Cùng mã và cùng kỳ thì cập nhật giá, khác kỳ thì thêm dòng mới, dòng trùng hoàn toàn được bỏ bớt. File formula trắng thì toàn bộ dòng template được điền vào, cột E là Static và cột F là 2.</small></span></div>
+          <div class="set-row"><span>Giá và ngày<small>Giá làm tròn 2 số lẻ (11,285 thành 11,29). Ngày ở mọi kiểu gõ được đưa về dd.mm.yyyy.</small></span></div>
+          <div class="set-row"><span>Cần xem lại<small>Mã có nhiều giá trong cùng kỳ (liên hệ PIC) và dòng có ngày kết thúc trước ngày bắt đầu. Các dòng này vẫn nằm trong file và được ghi ở sheet Report.</small></span></div>
+          <div class="set-row"><span>Màu trong file Excel<span class="legend"><span class="pill UPDATED">Đổi giá</span><span class="pill ADDED">Thêm mới</span><span class="pill REVIEW">Mã lặp lại</span></span></span></div>
+          <button class="set-row" data-act="welcome"><span>Xem lại màn hình giới thiệu</span><svg class="i" aria-hidden="true"><use href="#i-chev-r"/></svg></button>
+        </div>
+        <button class="btn btn-dark" data-act="reset" style="max-width: 320px"><svg class="i" aria-hidden="true"><use href="#i-reset"/></svg>Làm lượt mới</button>
       </div>
-      <div><button class="btn secondary" data-act="welcome">Xem lại màn hình giới thiệu</button></div>
     </section>
   </main>
 
   <nav class="tabbar" aria-label="Các bước">
     <button class="tab" data-go="upload" data-nav="upload"><svg class="i" aria-hidden="true"><use href="#i-upload"/></svg>Tải file</button>
-    <button class="tab" data-go="review" data-nav="review"><svg class="i" aria-hidden="true"><use href="#i-review"/></svg>Kiểm tra<span class="count" data-count hidden></span></button>
+    <button class="tab" data-go="review" data-nav="review"><svg class="i" aria-hidden="true"><use href="#i-review"/></svg>Kiểm tra<span class="badge" data-count hidden></span></button>
     <button class="tab" data-go="export" data-nav="export"><svg class="i" aria-hidden="true"><use href="#i-export"/></svg>Xuất file</button>
     <button class="tab" data-go="help" data-nav="help"><svg class="i" aria-hidden="true"><use href="#i-help"/></svg>Hướng dẫn</button>
   </nav>
@@ -738,18 +879,18 @@ async function offerDownload(data, filename) {
 
 const VIEWS = ['welcome', 'upload', 'review', 'detail', 'export', 'help'];
 const ROLE = {
-  formula: { label: 'File formula', what: 'giá hiện tại', hint: 'Sheet đầu tiên · cột B–I từ dòng 2 · file trắng cũng được' },
-  template: { label: 'File template', what: 'giá mới', hint: 'Sheet đang mở · cột B–E từ dòng 26' },
+  formula: { label: 'File formula', what: 'giá hiện tại', hint: 'Sheet đầu tiên · cột B–I từ dòng 2 · file trắng cũng được', empty: 'Giá hiện tại' },
+  template: { label: 'File template', what: 'giá mới', hint: 'Sheet đang mở · cột B–E từ dòng 26', empty: 'Giá mới cần cập nhật' },
 };
 const STATUS = { REVIEW: 'Cần xem', UPDATED: 'Đổi giá', ADDED: 'Thêm mới', UNCHANGED: 'Không đổi' };
 const state = {
   view: '', busy: false, files: { formula: null, template: null }, errors: {}, pickRole: 'formula',
-  wb: null, rows: [], meta: null, saved: null, reviewed: new Set(),
-  filter: 'all', query: '', limit: 120, item: null, nav: [],
+  wb: null, rows: [], meta: null, saved: null, reviewed: new Set(), nameMode: 'plain',
+  filter: 'all', query: '', limit: 120, chartFilter: 'all', item: null, nav: [],
 };
 const has = () => state.rows.length > 0;
 const today = () => isoDay(new Date(Date.now() - new Date().getTimezoneOffset() * 60000));
-const outName = () => document.querySelector('input[name=fname]:checked')?.value === 'dated' ? `Directo_Upload_${day(today())}.xlsx` : 'Directo_Upload.xlsx';
+const outName = () => state.nameMode === 'dated' ? `Directo_Upload_${day(today())}.xlsx` : 'Directo_Upload.xlsx';
 
 function setResult(res) {
   state.rows = res.rows.map((r, idx) => {
@@ -762,7 +903,7 @@ function setResult(res) {
   state.saved = null;
   const c = counts();
   state.filter = c.REVIEW ? 'REVIEW' : c.UPDATED ? 'UPDATED' : 'all';
-  state.item = null;
+  state.item = null; state.chartFilter = 'all';
 }
 function clearResult() { Object.assign(state, { wb: null, rows: [], meta: null, saved: null, item: null }); }
 function counts() {
@@ -781,147 +922,156 @@ function filtered() {
   return state.rows.filter(r => (state.filter === 'all' || r.kind === state.filter) && (!q || r.item.includes(q)));
 }
 
-function plotHTML(values, fmt) {
+function plotHTML(values, fmt, zero) {
   if (values.length === 1) values = [values[0], values[0]];
   const lo = Math.min(...values), hi = Math.max(...values), span = hi - lo || 1;
-  const y = v => 6 + (1 - (v - lo) / span) * 88;
-  const pts = values.map((v, i) => `${(i / (values.length - 1) * 100).toFixed(2)},${y(v).toFixed(2)}`).join(' ');
-  const zero = lo < 0 && hi > 0 ? y(0) : null;
+  const y = v => 8 + (1 - (v - lo) / span) * 84;
+  const pts = values.map((v, i) => [i / (values.length - 1) * 100, y(v)]);
+  const iHi = values.indexOf(hi), iLo = values.indexOf(lo);
+  const zy = zero && lo < 0 && hi > 0 ? y(0) : null;
   return `<div class="plot">
-      <span class="gl" style="top:0"></span><span class="gl" style="bottom:0"></span>${zero != null ? `<span class="gl" style="top:${zero}%"></span><span class="lab" style="left:0;top:${zero}%;transform:translateY(-110%)">0%</span>` : ''}
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}"/></svg>
-      <span class="lab" style="right:0;top:0">${fmt(hi)}</span><span class="lab" style="left:0;bottom:0">${fmt(lo)}</span>
+      <span class="gl" style="top:0"></span><span class="gl" style="top:${zy ?? 50}%"></span><span class="gl" style="bottom:0"></span><span class="vl"></span>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts.map(p => p[0].toFixed(2) + ',' + p[1].toFixed(2)).join(' ')}"/></svg>
+      ${[iLo, iHi].map(i => `<span class="mk" style="left:${pts[i][0]}%;top:${pts[i][1]}%"></span>`).join('')}
+      <span class="lab" style="top:3px;right:6%">${fmt(hi)}</span><span class="lab" style="bottom:3px;left:14px">${fmt(lo)}</span>
+      ${zy != null ? `<span class="lab" style="left:2px;top:${zy}%;transform:translateY(-120%)">0%</span>` : ''}
     </div>`;
 }
 
 function rowHTML(r) {
-  let sub;
-  if (r.issue) sub = `<span class="neg">${r.price_conflict ? 'Khác giá cùng kỳ' : 'Ngày sai'}</span>`;
-  else if (r.kind === 'UPDATED') sub = r.pct == null ? `từ ${price(r.old_price)}` : `<span>${signed(r.pct)} · từ ${price(r.old_price)}</span>`;
-  else sub = `<span class="pill ${r.kind}">${STATUS[r.kind]}</span>`;
+  let second;
+  if (r.issue) second = `<span class="down">${r.price_conflict ? 'Khác giá' : 'Ngày sai'}</span>`;
+  else if (r.kind === 'UPDATED') second = r.pct == null ? `<span class="gray">Đổi giá</span>` : `<span class="${r.pct > 0 ? 'up' : r.pct < 0 ? 'down' : 'gray'}">${signed(r.pct)}</span>`;
+  else if (r.kind === 'ADDED') second = `<span class="new">Thêm mới</span>`;
+  else second = `<span class="muted">Không đổi</span>`;
   return `<button class="row" data-act="open-row" data-idx="${r.idx}" aria-current="${state.item === r.idx && wide()}">
-    <span class="code">${esc(r.item)}${state.reviewed.has(r.idx) ? icon('check') : ''}</span><span class="val">${price(r.price)}</span>
-    <span class="per">${period(r)}</span><span class="sub">${sub}</span></button>`;
+    <span class="st ${r.kind}">${icon(r.kind)}</span>
+    <span class="r-name"><b>${esc(r.item)}${state.reviewed.has(r.idx) ? icon('check') : ''}</b><span>${period(r)}</span></span>
+    <span class="r-val"><span>${price(r.price)}</span>${second}</span></button>`;
 }
 
 function detailHTML(r) {
   const same = state.rows.filter(x => x.item === r.item);
+  const change = r.status === 'UPDATED' && r.pct != null ? `<span class="${r.pct > 0 ? 'up' : 'down'}">${signed(r.pct)}</span>`
+    : `<span class="pill ${r.kind}">${STATUS[r.kind]}</span>`;
   const notes = [];
   if (r.price_conflict) notes.push(`<div class="notice err">${icon('alert')}<p>Mã này có nhiều giá trong cùng kỳ khuyến mãi. Liên hệ PIC để chốt một giá.</p></div>`);
   if (r.bad_date) notes.push(`<div class="notice err">${icon('alert')}<p>Ngày kết thúc trước ngày bắt đầu. Sửa ngày trong file template rồi tải lại.</p></div>`);
-  const move = r.kind === 'UPDATED' || (r.issue && r.status === 'UPDATED')
-    ? `<span class="old">${price(r.old_price)}</span>${icon('arrow')}<span class="new">${price(r.price)}</span>${r.pct != null ? `<span class="${r.pct > 0 ? 'pos' : 'neg'}">${signed(r.pct)}</span>` : ''}`
-    : `<span class="new">${price(r.price)}</span>`;
-  const pos = state.nav.indexOf(r.idx);
-  const seen = state.reviewed.has(r.idx);
-  return `<div class="panel-body">
-    <div class="detail-head"><div><h2>${esc(r.item)}</h2><p class="muted">${period(r)}</p></div><span class="pill ${r.kind}">${STATUS[r.kind]}</span></div>
-    <div class="price-move">${move}</div>
-    ${notes.join('')}
-    <dl class="facts"><dt>Giá cũ</dt><dd>${r.status === 'UPDATED' ? price(r.old_price) : '—'}</dd><dt>Giá mới</dt><dd>${price(r.price)}</dd><dt>Từ ngày</dt><dd>${day(r.start)}</dd><dt>Đến ngày</dt><dd>${day(r.end)}</dd></dl>
-    ${same.length > 1 ? `<div class="siblings"><b>Mã này có ${same.length} dòng</b>${same.map(x => `<div><span class="muted">${period(x)}</span><span class="num">${price(x.price)}</span></div>`).join('')}</div>` : ''}
-    ${r.issue ? `<button class="btn secondary toggle-seen" data-act="mark" aria-pressed="${seen}">${icon('check')}${seen ? 'Đã xem' : 'Đánh dấu đã xem'}</button>` : ''}
-    <div class="detail-actions">
-      <button class="btn secondary" data-act="step" data-dir="-1" ${pos <= 0 ? 'aria-disabled="true"' : ''}>${icon('back')}Dòng trước</button>
-      <button class="btn secondary" data-act="step" data-dir="1" ${pos < 0 || pos >= state.nav.length - 1 ? 'aria-disabled="true"' : ''}>Dòng sau${icon('arrow')}</button>
+  const pos = state.nav.indexOf(r.idx), seen = state.reviewed.has(r.idx);
+  return `<div class="r-head"><span class="st ${r.kind}">${icon(r.kind)}</span><div class="h-name"><b>${esc(r.item)}</b><span>${period(r)}</span></div><div class="h-val"><b>${price(r.price)}</b>${change}</div></div>
+    <div class="bs-row">
+      <button class="pill-btn dark" data-act="step" data-dir="-1" ${pos <= 0 ? 'aria-disabled="true"' : ''}>${icon('prev')}Dòng trước</button>
+      <button class="pill-btn cyan" data-act="step" data-dir="1" ${pos < 0 || pos >= state.nav.length - 1 ? 'aria-disabled="true"' : ''}>Dòng sau${icon('next')}</button>
+      <button class="mark-btn" data-act="mark" aria-pressed="${seen}" aria-label="${seen ? 'Bỏ đánh dấu đã xem' : 'Đánh dấu đã xem'}" title="Đánh dấu đã xem">${icon('check')}</button>
     </div>
-    <p class="fine">${pos + 1} / ${state.nav.length} dòng trong danh sách đang lọc</p>
-  </div>`;
+    ${notes.join('')}
+    <div class="stats">
+      <div class="stat"><p>Giá cũ</p><b>${r.status === 'UPDATED' ? price(r.old_price) : '—'}</b></div>
+      <div class="stat"><p>Giá mới</p><b>${price(r.price)}</b></div>
+      <div class="stat"><p>Từ ngày</p><b>${day(r.start)}</b></div>
+      <div class="stat"><p>Đến ngày</p><b>${day(r.end)}</b></div>
+    </div>
+    ${same.length > 1 ? `<div class="siblings"><b>Mã này có ${same.length} dòng</b>${same.map(x => `<div><span class="gray">${period(x)}</span><span class="num">${price(x.price)}</span></div>`).join('')}</div>` : ''}
+    <p class="pos">${pos + 1} / ${state.nav.length} dòng trong danh sách đang lọc${seen ? ' · đã xem' : ''}</p>`;
 }
 
 const RENDER = {
   shared() {
     const c = counts(), { formula, template } = state.files;
-    $('#scope').textContent = formula && template ? `${formula.name} + ${template.name}` : formula || template ? 'Đã chọn 1 file' : 'Chưa chọn file';
-    const marks = {
-      upload: has() ? 'done' : 'todo',
-      review: !has() ? 'locked' : c.left ? 'todo' : 'done',
-      export: !has() ? 'locked' : state.saved ? 'done' : 'todo',
-    };
+    $('#side-files').innerHTML = formula || template
+      ? `<span class="sf-label">Đang làm với</span><span><b>${esc(formula?.name || 'Chưa chọn file formula')}</b><b>${esc(template?.name || 'Chưa chọn file template')}</b></span>`
+      : `<span class="sf-label">Chưa chọn file</span><b>Bấm để chọn 2 file</b>`;
+    const marks = { upload: has() ? 'done' : 'todo', review: !has() ? 'locked' : c.left ? 'todo' : 'done', export: !has() ? 'locked' : state.saved ? 'done' : 'todo' };
+    const current = state.view === 'detail' ? 'review' : state.view;
     document.querySelectorAll('.state[data-step]').forEach(el => {
-      const step = el.dataset.step, m = state.view === step || (state.view === 'detail' && step === 'review') ? (marks[step] === 'done' ? 'done' : 'current') : marks[step];
+      const step = el.dataset.step, m = step === current && marks[step] !== 'done' ? 'current' : marks[step];
       el.className = `state ${m}`;
       el.innerHTML = m === 'done' ? icon('check') : '';
     });
-    document.querySelectorAll('[data-count]').forEach(el => { el.hidden = !c.left; el.textContent = c.left; el.title = `${c.left} dòng cần xem lại`; });
+    document.querySelectorAll('[data-count]').forEach(el => { el.hidden = !c.left; el.textContent = c.left; });
+    document.querySelectorAll('.bell .dot').forEach(el => { el.hidden = !c.left; });
   },
   welcome() {},
   upload() {
     const { formula, template } = state.files;
-    $('#upload-finding').innerHTML = formula && template && !formula.rows ? `File formula đang trắng: toàn bộ dòng trong template sẽ được điền vào. Bấm <b>Kiểm tra thay đổi</b> để xem trước.`
-      : formula && template ? `Đã đủ 2 file. Bấm <b>Kiểm tra thay đổi</b> để xem trước.`
+    $('#upload-finding').innerHTML = formula && template && !formula.rows ? 'File formula đang trắng: toàn bộ dòng trong template sẽ được điền vào. Bấm <b>Kiểm tra thay đổi</b> để xem trước.'
+      : formula && template ? 'Đã đủ 2 file. Bấm <b>Kiểm tra thay đổi</b> để xem trước.'
       : formula || template ? `Còn thiếu <b>${formula ? 'file template' : 'file formula'}</b>.`
-      : 'Chọn file formula (giá hiện tại) và file template (giá mới) của kỳ khuyến mãi.';
+      : 'File formula chứa giá hiện tại (có thể là file trắng), file template chứa giá mới.';
     for (const role of ['formula', 'template']) {
       const f = state.files[role], err = state.errors[role], R = ROLE[role];
-      const el = $('#drop-' + role);
-      el.className = `drop${f ? ' has' : ''}${err ? ' bad' : ''}`;
-      el.innerHTML = `<div class="drop-head"><h2>${R.label} <span>· ${R.what}</span></h2>${f ? `<button class="link" data-act="pick" data-role="${role}">Đổi file</button>` : ''}</div>
-        <button class="drop-zone" data-act="pick" data-role="${role}" aria-label="${f ? 'Đổi' : 'Chọn'} ${R.label.toLowerCase()}">
-          <svg class="file-ico" aria-hidden="true"><use href="#${f ? 'sheet-ok' : 'sheet-ico'}"/></svg>
-          <span class="fz-text">${f ? `<b>${esc(f.name)}</b><span>Sheet “${esc(f.sheet)}” · ${role === 'formula' && !f.rows ? 'file trắng, sẽ điền từ template' : `${num.format(f.rows)} dòng mã`} · ${kb(f.size)}</span>`
-            : `<b>Kéo file vào đây hoặc bấm để chọn</b><span>Chỉ nhận file .xlsx</span>`}</span></button>
-        <p class="drop-hint">${R.hint}</p>
-        ${role === 'formula' && f && !f.rows && !f.header ? `<p class="drop-hint">File chưa có dòng tiêu đề, dòng 1 của file xuất ra sẽ để trống.</p>` : ''}
-        ${err ? `<p class="drop-err">${icon('alert')}${esc(err)}</p>` : ''}`;
+      const meta = f && (role === 'formula' && !f.rows ? 'file trắng, sẽ điền từ template' : `${num.format(f.rows)} dòng mã`);
+      $('#field-' + role).innerHTML = `<p class="field-label">${R.label}<span>${R.what}</span></p>
+        ${f ? `<button class="filebox${err ? ' bad' : ''}" data-act="pick" data-role="${role}"><span class="st cyan">${icon('check')}</span>
+            <span class="fb-text"><b>${esc(f.name)}</b><span>Sheet “${esc(f.sheet)}” · ${meta} · ${kb(f.size)}</span></span><span class="fb-act">Đổi</span></button>`
+          : `<button class="filebox none${err ? ' bad' : ''}" data-act="pick" data-role="${role}"><span class="st soft">${icon('file')}</span>
+            <span class="fb-text"><b>Chưa chọn file</b><span>${R.empty} · kéo thả hoặc bấm để chọn</span></span><span class="fb-act">Chọn…</span></button>`}
+        <p class="field-hint">${R.hint}</p>
+        ${role === 'formula' && f && !f.rows && !f.header ? '<p class="field-hint">File chưa có dòng tiêu đề, dòng 1 của file xuất ra sẽ để trống.</p>' : ''}
+        ${err ? `<p class="field-err">${icon('alert')}${esc(err)}</p>` : ''}`;
     }
   },
   review() {
     $('#review-empty').hidden = has();
     $('#review-body').hidden = !has();
-    $('#to-export').style.visibility = has() ? '' : 'hidden';
-    if (!has()) { $('#review-finding').textContent = 'Bước này mở ra sau khi tải đủ 2 file.'; return; }
+    if (!has()) return;
     const c = counts(), f = state.files;
+    $('#who').innerHTML = `<span class="st cyan">${icon('sheet')}</span><span><span class="who-name">${esc(f.formula.name)}</span><span class="who-sub">+ ${esc(f.template.name)} · ${num.format(state.meta.template)} dòng template</span></span>`;
+    $('#total').innerHTML = `${num.format(c.all)}<small> dòng</small>`;
+    $('#delta').innerHTML = `<span class="up">+${num.format(c.ADDED)} thêm mới</span><span class="gray">${num.format(c.UPDATED)} đổi giá</span>`;
     const parts = [];
     if (c.conflicts) parts.push(`${num.format(c.conflicts)} dòng cùng kỳ khác giá, cần liên hệ PIC`);
     if (c.badDates) parts.push(`${num.format(c.badDates)} dòng có ngày kết thúc trước ngày bắt đầu`);
     $('#review-finding').className = `finding${c.left ? ' alert' : ''}`;
-    $('#review-finding').innerHTML = c.REVIEW
-      ? `<b>${num.format(c.left)} / ${num.format(c.REVIEW)} dòng cần xem trước khi upload.</b> ${parts.join('; ')}.`
+    $('#review-finding').innerHTML = c.REVIEW ? `<b>${num.format(c.left)} / ${num.format(c.REVIEW)} dòng cần xem trước khi upload.</b> ${parts.join('; ')}.`
       : !f.formula.rows ? `Đã điền <b>${num.format(c.all)} dòng</b> từ template vào file formula trắng. Không có dòng nào cần xem lại.`
-      : `Không có dòng nào cần xem lại. ${num.format(c.UPDATED)} dòng đổi giá, ${num.format(c.ADDED)} dòng thêm mới.`;
-    $('#sync').innerHTML = `<div><span>${esc(f.formula.name)}</span><b class="num">${num.format(f.formula.rows)}</b></div>${icon('plus')}
-      <div><span>${esc(f.template.name)}</span><b class="num">${num.format(state.meta.template)}</b></div>${icon('arrow')}
-      <div class="out"><span>Directo_Upload${state.meta.removed ? ` · bỏ ${num.format(state.meta.removed)} dòng trùng` : ''}</span><b class="num">${num.format(c.all)} dòng</b></div>`;
-    const kpis = [['REVIEW', 'Cần xem lại', 'var(--rev-bg)'], ['UPDATED', 'Đổi giá', 'var(--upd-bg)'], ['ADDED', 'Thêm mới', 'var(--add-bg)'], ['UNCHANGED', 'Không đổi', 'var(--same-bg)']];
-    $('#kpis').innerHTML = kpis.map(([k, l, sw]) => `<button class="kpi${k === 'REVIEW' ? ' lead' : ''}" role="tab" data-act="filter" data-filter="${k}" aria-selected="${state.filter === k}"><span><i style="background:${sw}"></i>${l}</span><b class="num">${num.format(c[k])}</b></button>`).join('');
+      : `Không có dòng nào cần xem lại.${state.meta.removed ? ` Đã bỏ ${num.format(state.meta.removed)} dòng trùng.` : ''}`;
+    $('#tile-review').textContent = c.REVIEW ? `${num.format(c.left)} dòng chưa xem` : 'Không có dòng nào';
+    $('#tile-export').textContent = `${num.format(c.all)} dòng · Directo_Upload.xlsx`;
+    const tabs = [['REVIEW', 'Cần xem'], ['UPDATED', 'Đổi giá'], ['ADDED', 'Thêm mới'], ['UNCHANGED', 'Không đổi'], ['all', 'Tất cả']];
+    $('#tabs').innerHTML = tabs.map(([k, l]) => `<button role="tab" data-act="filter" data-filter="${k}" aria-selected="${state.filter === k}">${l}<sup>${num.format(k === 'all' ? c.all : c[k])}</sup></button>`).join('');
     const rows = filtered();
     state.nav = rows.map(r => r.idx);
     if (wide() && (state.item == null || !state.nav.includes(state.item))) state.item = state.nav[0] ?? null;
-    $('#list-title').innerHTML = `${state.filter === 'all' ? 'Tất cả dòng' : kpis.find(k => k[0] === state.filter)[1]} <span class="muted">· ${num.format(rows.length)}</span>${state.filter !== 'all' ? ` <button class="link" data-act="filter" data-filter="all">Xem tất cả</button>` : ''}`;
     const shown = rows.slice(0, state.limit);
     $('#rows').innerHTML = (shown.length ? shown.map(rowHTML).join('') : `<div class="empty">${state.query ? 'Không có mã nào khớp.' : 'Không có dòng nào trong nhóm này.'}</div>`)
-      + (rows.length > shown.length ? `<div class="list-foot"><button class="btn secondary" data-act="more">Hiện thêm ${num.format(Math.min(300, rows.length - shown.length))} dòng</button></div>` : '');
+      + (rows.length > shown.length ? `<div class="list-foot"><button class="btn btn-dark sm" data-act="more">Hiện thêm ${num.format(Math.min(300, rows.length - shown.length))} dòng</button></div>` : '');
     const r = state.rows[state.item];
     $('#detail-panel').innerHTML = r ? detailHTML(r) : `<div class="empty">Chọn một dòng để xem chi tiết.</div>`;
-    const changes = state.rows.filter(x => x.pct != null).map(x => x.pct).sort((a, b) => a - b);
-    const step = Math.max(1, Math.ceil(changes.length / 120));
-    $('#chart-sub').textContent = changes.length ? `${num.format(c.up)} tăng · ${num.format(c.down)} giảm` : '';
-    $('#chart').innerHTML = changes.length
-      ? plotHTML(changes.filter((_, i) => i % step === 0 || i === changes.length - 1), signed) + `<p class="chart-note">Mỗi điểm là một dòng đổi giá, xếp từ giảm nhiều nhất đến tăng nhiều nhất. Dòng nào lệch hẳn khỏi đường thì nên mở ra xem.</p>`
-      : `<p class="chart-note">Kỳ này không có dòng nào đổi giá.</p>`;
+    const changed = state.rows.filter(x => x.pct != null && (state.chartFilter === 'all' || (state.chartFilter === 'up' ? x.pct > 0 : x.pct < 0))).map(x => x.pct).sort((a, b) => a - b);
+    const step = Math.max(1, Math.ceil(changed.length / 120));
+    $('#chart-sub').textContent = `${num.format(c.up)} tăng · ${num.format(c.down)} giảm`;
+    $('#chart').innerHTML = (changed.length ? plotHTML(changed.filter((_, i) => i % step === 0 || i === changed.length - 1), signed, true)
+        : `<div class="empty">${c.up + c.down ? 'Không có dòng nào khớp bộ lọc.' : 'Kỳ này không có dòng nào đổi giá.'}</div>`)
+      + `<div class="ranges" role="group" aria-label="Lọc biểu đồ">${[['all', 'Tất cả'], ['up', 'Tăng'], ['down', 'Giảm']].map(([k, l]) => `<button data-act="chart-filter" data-filter="${k}" aria-pressed="${state.chartFilter === k}">${l}</button>`).join('')}</div>
+        <p class="chart-note">Mỗi điểm là một dòng đổi giá, xếp từ giảm nhiều nhất đến tăng nhiều nhất</p>`;
   },
   detail() {
-    if (wide() || state.rows[state.item] == null) return go('review');
-    $('#detail-phone').innerHTML = detailHTML(state.rows[state.item]);
+    const r = state.rows[state.item];
+    if (wide() || !r) return go('review');
+    $('#detail-title').textContent = `Mã ${r.item}`;
+    $('#detail-phone').innerHTML = detailHTML(r);
   },
   export() {
     $('#export-empty').hidden = has();
-    $('#export-body').hidden = !has() || !!state.saved;
-    $('#export-done').hidden = !state.saved;
-    if (!has()) { $('#export-finding').textContent = 'Bước này mở ra sau khi kiểm tra thay đổi.'; return; }
+    $('#export-body').hidden = !has();
+    if (!has()) return;
     const c = counts();
-    $('#dated-name').textContent = `Directo_Upload_${day(today())}.xlsx`;
-    $('#export-finding').innerHTML = `File gồm <b>${num.format(c.all)} dòng</b> và sheet Report, sẵn sàng tải về.`;
-    $('#export-warn').innerHTML = c.REVIEW ? `<div class="notice warn">${icon('alert')}<p>${num.format(c.REVIEW)} dòng cần xem lại vẫn nằm trong file và được ghi ở sheet Report.${c.left ? ` Bạn còn ${num.format(c.left)} dòng chưa xem.` : ''}</p></div>` : '';
-    $('#export-facts').innerHTML = [
-      ['Dòng trong sheet Directo_Upload', c.all], ['Đổi giá (tô xanh lá)', c.UPDATED], ['Thêm mới (tô xanh dương)', c.ADDED],
-      ['Không đổi', c.UNCHANGED], ['Dòng trùng đã bỏ', state.meta.removed], ['Cần xem lại', c.REVIEW],
-    ].map(([k, v]) => `<dt>${k}</dt><dd>${num.format(v)}</dd>`).join('');
+    $('#export-form').hidden = !!state.saved;
+    $('#export-done').hidden = !state.saved;
+    document.querySelectorAll('.seg [role=tab]').forEach(t => t.setAttribute('aria-selected', t.dataset.mode === state.nameMode));
+    $('#export-name').textContent = outName();
+    $('#export-total').textContent = `${num.format(c.all)} dòng`;
+    $('#ex-upd').textContent = num.format(c.UPDATED);
+    $('#ex-add').textContent = num.format(c.ADDED);
+    $('#ex-same').textContent = num.format(c.UNCHANGED);
+    $('#ex-rev').textContent = num.format(c.REVIEW);
+    $('#ex-rev-wrap').classList.toggle('alert', c.REVIEW > 0);
+    $('#export-warn').innerHTML = c.REVIEW ? `<div class="notice warn">${icon('alert')}<p>${num.format(c.REVIEW)} dòng cần xem lại vẫn nằm trong file và được ghi ở sheet Report.${c.left ? ` Còn ${num.format(c.left)} dòng bạn chưa xem.` : ''}</p></div>` : '';
     $('#save-note').textContent = window.claude?.use ? 'Trình duyệt sẽ hỏi bạn xác nhận trước khi lưu file.' : 'File được tải về thư mục Tải xuống (Downloads) của trình duyệt.';
     if (state.saved) {
-      $('#done-title').textContent = `Đã tải ${state.saved}`;
-      $('#done-text').textContent = `${num.format(c.all)} dòng, sẵn sàng import vào Directo.${c.REVIEW ? ` Nhớ xử lý ${num.format(c.REVIEW)} dòng cần xem lại.` : ''}`;
+      $('#done-text').innerHTML = `Đã tạo <b>${num.format(c.all)} dòng</b> trong file <b>${esc(state.saved)}</b>, sẵn sàng import vào Directo.`
+        + (c.REVIEW ? `<br><b class="down">${num.format(c.REVIEW)} dòng</b> cần xem lại được ghi trong sheet Report.` : '');
     }
   },
   help() {},
@@ -939,7 +1089,7 @@ function validate() {
   state.errors = e;
   RENDER.upload();
   const first = Object.keys(e)[0];
-  if (first) $(`#drop-${first} .drop-zone`).focus();
+  if (first) $(`#field-${first} .filebox`).focus();
   return !first;
 }
 
@@ -1004,19 +1154,17 @@ const ACTS = {
     state.query = ''; $('#q').value = ''; state.limit = 120;
     go('review');
   },
+  issues() { if (!has()) return go('upload'); state.filter = 'REVIEW'; state.item = null; state.query = ''; $('#q').value = ''; if (state.view === 'review') RENDER.review(); else go('review'); },
   filter(t) { state.filter = t.dataset.filter; state.limit = 120; state.item = null; RENDER.review(); },
+  'chart-filter'(t) { state.chartFilter = t.dataset.filter; RENDER.review(); },
   more() { state.limit += 300; RENDER.review(); },
-  'open-row'(t) {
-    state.item = Number(t.dataset.idx);
-    if (wide()) RENDER.review(); else go('detail');
-  },
+  'open-row'(t) { state.item = Number(t.dataset.idx); if (wide()) RENDER.review(); else go('detail'); },
   step(t) {
     if (t.getAttribute('aria-disabled') === 'true') return;
     const next = state.nav[state.nav.indexOf(state.item) + Number(t.dataset.dir)];
     if (next == null) return;
     state.item = next;
     if (wide()) RENDER.review(); else RENDER.detail();
-    RENDER.shared();
   },
   mark() {
     const i = state.item;
@@ -1024,6 +1172,7 @@ const ACTS = {
     if (wide()) RENDER.review(); else RENDER.detail();
     RENDER.shared();
   },
+  'name-mode'(t) { state.nameMode = t.dataset.mode; RENDER.export(); },
   async save() {
     if (!state.wb) return go('upload');
     const name = state.saved || outName();
@@ -1064,14 +1213,14 @@ $('#pair-input').addEventListener('change', e => loadPair(e.target.files));
 document.addEventListener('dragover', e => {
   if (!e.target.closest('#v-upload')) return;
   e.preventDefault();
-  document.querySelectorAll('.drop').forEach(d => d.classList.toggle('over', d.contains(e.target)));
+  document.querySelectorAll('.filebox').forEach(b => b.classList.toggle('over', b.contains(e.target)));
 });
-document.addEventListener('dragleave', e => { if (!e.relatedTarget || !e.relatedTarget.closest?.('.drop')) document.querySelectorAll('.drop').forEach(d => d.classList.remove('over')); });
+document.addEventListener('dragleave', e => { if (!e.relatedTarget || !e.relatedTarget.closest?.('.filebox')) document.querySelectorAll('.filebox').forEach(b => b.classList.remove('over')); });
 document.addEventListener('drop', e => {
   if (!e.target.closest('#v-upload')) return;
   e.preventDefault();
-  document.querySelectorAll('.drop').forEach(d => d.classList.remove('over'));
-  const box = e.target.closest('.drop'), files = e.dataTransfer.files;
+  document.querySelectorAll('.filebox').forEach(b => b.classList.remove('over'));
+  const box = e.target.closest('.filebox'), files = e.dataTransfer.files;
   if (box && files.length === 1) loadInto(box.dataset.role, files[0]); else loadPair(files);
 });
 window.addEventListener('hashchange', () => show(location.hash.slice(1)));
