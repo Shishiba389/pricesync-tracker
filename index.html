@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PriceSync Tracker</title>
-<meta name="description" content="Ghép file formula với file template, kiểm tra từng thay đổi giá và tải về Directo_Upload.xlsx, ngay trong trình duyệt.">
+<meta name="description" content="Ghép file formula với file template, kiểm tra và sửa từng dòng, tải về Directo_Price_Upload.xlsx đúng mẫu import, ngay trong trình duyệt.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap">
 <script>document.documentElement.classList.add('js');</script>
@@ -126,9 +126,6 @@ section { scroll-margin-top: 80px; }
 .feat:last-child { border-bottom: 1px solid var(--line); }
 .feat h3 { font-size: 19px; font-weight: 500; }
 .feat p { color: var(--gray); font-weight: 300; }
-.pills { display: flex; flex-wrap: wrap; gap: 6px; }
-.pill { display: inline-flex; align-items: center; height: 26px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 600; }
-.pill.upd { background: var(--upd-bg); color: var(--upd-ink); } .pill.add { background: var(--add-bg); color: var(--add-ink); } .pill.rev { background: var(--rev-bg); color: var(--rev-ink); }
 
 /* flip */
 .flip-sec { background: var(--soft); }
@@ -250,7 +247,7 @@ details p { padding: 0 0 20px; color: var(--gray); font-weight: 300; max-width: 
     <div class="wrap">
       <div class="hero-copy">
         <h1>Giá mới lên Directo, không sót dòng nào</h1>
-        <p class="lead">PriceSync Tracker ghép file formula với file template, cho bạn kiểm tra từng thay đổi giá, rồi tạo sẵn file Directo_Upload.xlsx để import.</p>
+        <p class="lead">PriceSync Tracker ghép file formula với file template, cho bạn kiểm tra và sửa từng dòng, rồi tạo sẵn file Directo_Price_Upload.xlsx đúng mẫu để import.</p>
         <div class="cta-row">
           <a class="btn btn-dark" href="app.html#upload">Mở ứng dụng<svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg></a>
           <a class="btn btn-outline" href="#how">Xem cách hoạt động</a>
@@ -327,14 +324,14 @@ details p { padding: 0 0 20px; color: var(--gray); font-weight: 300; max-width: 
             <svg class="art" viewBox="0 0 74 74" aria-hidden="true"><g fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="10" y="12" width="44" height="50" rx="6"/><path d="M18 24h28M18 34h28M18 44h18"/><circle cx="50" cy="48" r="12" fill="#222222" stroke="#82E9FF"/><path d="m59 57 7 7" stroke="#82E9FF"/></g></svg>
           </div>
           <h3>Kiểm tra</h3>
-          <p>Xem mã đổi giá, mã thêm mới và những dòng cần xem lại: cùng kỳ mà khác giá, hoặc ngày kết thúc trước ngày bắt đầu.</p>
+          <p>Xem mã đổi giá, mã thêm mới và dòng cần xử lý: cùng kỳ mà khác giá, ngày sai, giá lỗi. Sửa số liệu ngay trên màn hình.</p>
         </article>
         <article class="step cyanbg reveal" style="--d:.25s">
           <div class="step-top"><span class="step-n">3</span>
             <svg class="art" viewBox="0 0 74 74" aria-hidden="true"><g fill="none" stroke="#222222" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M18 8h26l12 12v40a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V12a4 4 0 0 1 4-4z" fill="#FFFFFF"/><path d="M24 30h20M24 38h20M24 46h12"/><circle cx="52" cy="52" r="14" fill="#222222"/><path d="m45 52 5 5 9-10" stroke="#82E9FF" stroke-width="2.6"/></g></svg>
           </div>
           <h3>Xuất file</h3>
-          <p>Tải về Directo_Upload.xlsx kèm sheet Report. Dòng đổi giá tô xanh lá, dòng mới tô xanh dương, mã lặp tô vàng.</p>
+          <p>Tải về Directo_Price_Upload.xlsx: 1 sheet Main đúng 9 cột Directo, được đọc lại để kiểm tra trước khi lưu.</p>
         </article>
       </div>
     </div>
@@ -344,11 +341,11 @@ details p { padding: 0 0 20px; color: var(--gray); font-weight: 300; max-width: 
     <div class="wrap preview">
       <div>
         <h2 class="reveal">Thấy hết mọi thay đổi trước khi upload</h2>
-        <p class="sub reveal" style="--d:.08s">Một màn hình cho biết bao nhiêu dòng sẽ lên Directo, dòng nào đổi giá bao nhiêu, và dòng nào cần liên hệ PIC.</p>
+        <p class="sub reveal" style="--d:.08s">Một màn hình cho biết bao nhiêu dòng sẽ lên Directo, dòng nào đổi giá bao nhiêu, và dòng nào phải xử lý trước khi xuất.</p>
         <ul class="checks">
-          <li class="reveal" style="--d:.12s"><span class="dot"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></span><span><b>Cảnh báo ngay</b>: mã có nhiều giá trong cùng kỳ, ngày kết thúc trước ngày bắt đầu.</span></li>
+          <li class="reveal" style="--d:.12s"><span class="dot"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></span><span><b>Chặn lỗi trước khi xuất</b>: mã nhiều giá trong cùng kỳ, ngày sai, giá không phải số.</span></li>
           <li class="reveal" style="--d:.2s"><span class="dot"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></span><span><b>Biểu đồ mức đổi giá</b>: dòng nào tăng hay giảm bất thường thì nhìn là thấy.</span></li>
-          <li class="reveal" style="--d:.28s"><span class="dot"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></span><span><b>Đánh dấu đã xem</b>: đi lần lượt từng dòng cần xem, không bỏ sót.</span></li>
+          <li class="reveal" style="--d:.28s"><span class="dot"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></span><span><b>Sửa trực tiếp</b>: đổi giá, ngày, mã ngay trên màn hình, số gốc hiện bên cạnh để đối chiếu.</span></li>
         </ul>
       </div>
       <div class="mock reveal" style="--d:.1s" aria-label="Ví dụ màn hình Kiểm tra">
@@ -356,11 +353,11 @@ details p { padding: 0 0 20px; color: var(--gray); font-weight: 300; max-width: 
         <p class="lbl">Dòng sẽ upload</p>
         <div class="mock-row"><p class="big"><span class="count" data-to="2482">2.482</span><small> dòng</small></p><p class="delta"><span style="color: var(--up)">+64 thêm mới</span><span style="color: var(--gray)">128 đổi giá</span></p></div>
         <div class="mock-tiles">
-          <div class="mock-tile dark"><svg class="i" aria-hidden="true" style="color: var(--cyan)"><use href="#i-dl"/></svg><span>Cần xem lại<small>3 dòng chưa xem</small></span></div>
-          <div class="mock-tile cy"><svg class="i" aria-hidden="true"><use href="#i-ur"/></svg><span>Xuất file<small>Directo_Upload.xlsx</small></span></div>
+          <div class="mock-tile dark"><svg class="i" aria-hidden="true" style="color: var(--cyan)"><use href="#i-dl"/></svg><span>Cần xử lý<small>3 dòng chưa xử lý</small></span></div>
+          <div class="mock-tile cy"><svg class="i" aria-hidden="true"><use href="#i-ur"/></svg><span>Xuất file<small>Directo_Price_Upload.xlsx</small></span></div>
         </div>
         <div class="mock-list">
-          <div class="mrow" style="--i:0"><span class="c rev"><svg class="i" aria-hidden="true"><use href="#i-rev"/></svg></span><span class="n"><b>C30551</b><span>01.02 – 14.02.2026</span></span><span class="v"><span>8,50</span><span style="color: var(--down)">Khác giá</span></span></div>
+          <div class="mrow" style="--i:0"><span class="c rev"><svg class="i" aria-hidden="true"><use href="#i-rev"/></svg></span><span class="n"><b>C30551</b><span>01.02 – 14.02.2026</span></span><span class="v"><span>8,50</span><span style="color: var(--down)">Trùng kỳ</span></span></div>
           <div class="mrow" style="--i:1"><span class="c"><svg class="i" aria-hidden="true"><use href="#i-upd"/></svg></span><span class="n"><b>A10234</b><span>05.01 – 10.01.2026</span></span><span class="v"><span>11,29</span><span style="color: var(--up)">+12,9%</span></span></div>
           <div class="mrow" style="--i:2"><span class="c"><svg class="i" aria-hidden="true"><use href="#i-add"/></svg></span><span class="n"><b>B20877</b><span>19.12 – 31.12.2026</span></span><span class="v"><span>21,00</span><span style="color: var(--add-ink)">Thêm mới</span></span></div>
         </div>
@@ -375,7 +372,7 @@ details p { padding: 0 0 20px; color: var(--gray); font-weight: 300; max-width: 
       <div class="feat-list">
         <div class="feat reveal"><h3>File formula trắng cũng được</h3><p>Đầu kỳ chưa có gì? Chọn file formula trắng, toàn bộ dòng của template được điền vào.</p></div>
         <div class="feat reveal"><h3>Ngày gõ kiểu gì cũng đọc được</h3><p>05.01.2026, 20260105, 05/01/2026 hay ô ngày của Excel đều được đưa về dd.mm.yyyy.</p></div>
-        <div class="feat reveal"><h3>Màu giống hệt trong file Excel</h3><p>Nhìn trên màn hình thế nào, mở file ra thấy đúng như thế.</p><div class="pills"><span class="pill upd">Đổi giá</span><span class="pill add">Thêm mới</span><span class="pill rev">Mã lặp</span></div></div>
+        <div class="feat reveal"><h3>Sửa ngay, không cần mở lại Excel</h3><p>Giá sai, ngày gõ nhầm: bấm Sửa, nhập lại, app kiểm tra lại ngay. Ô đã sửa hiện số gốc, bấm một lần là hoàn tác.</p></div>
         <div class="feat reveal"><h3>Làm tròn đúng kiểu kế toán</h3><p>11,285 thành 11,29, không bị lệch một xu vì cách máy tính lưu số thập phân.</p></div>
         <div class="feat reveal"><h3>Dữ liệu ở lại trên máy bạn</h3><p>File được đọc và xử lý ngay trong trình duyệt, không cần đăng nhập hay máy chủ.</p></div>
       </div>
@@ -404,11 +401,11 @@ details p { padding: 0 0 20px; color: var(--gray); font-weight: 300; max-width: 
     <div class="wrap">
       <h2 class="reveal">Hỏi đáp</h2>
       <div class="faq">
-        <details class="reveal"><summary>File formula đang trắng thì có dùng được không?<svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Được. Khi file formula chỉ có dòng tiêu đề, toàn bộ dòng trong template sẽ được điền vào như dòng mới, cột E là Static và cột F là 2.</p></details>
+        <details class="reveal"><summary>File formula đang trắng thì có dùng được không?<svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Được. Khi file formula chỉ có dòng tiêu đề, toàn bộ dòng trong template sẽ được điền vào như dòng mới, với Affects 8, Locations 2, Correction 0.</p></details>
         <details class="reveal"><summary>File của tôi có bị gửi lên mạng không?<svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Không. Trang chỉ đọc file ngay trong trình duyệt của bạn để tạo file upload, file gốc cũng không bị sửa.</p></details>
         <details class="reveal"><summary>Tool đọc file template ở đâu?<svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Sheet đang mở khi lưu file, cột B đến E từ dòng 26: mã, giá mới, ngày bắt đầu, ngày kết thúc. File formula đọc sheet đầu tiên, cột B đến I từ dòng 2.</p></details>
-        <details class="reveal"><summary>Dòng "cần xem lại" là gì?<svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Là mã có nhiều giá trong cùng một kỳ khuyến mãi (cần liên hệ PIC để chốt) và dòng có ngày kết thúc trước ngày bắt đầu. Các dòng này vẫn nằm trong file và được ghi lại ở sheet Report.</p></details>
-        <details class="reveal"><summary>File tải về gồm những gì?<svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Sheet Directo_Upload để import vào Directo, và sheet Report tổng hợp số dòng, mã mới, mã cập nhật cùng danh sách mã lặp lại.</p></details>
+        <details class="reveal"><summary>Dòng "cần xử lý" là gì?<svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Là dòng Directo sẽ không nhận: mã có nhiều giá trong cùng kỳ, ngày kết thúc trước ngày bắt đầu, ngày không đọc được, hoặc giá không phải số. Bạn sửa trực tiếp, giữ một giá, hoặc bỏ dòng đó trước khi xuất.</p></details>
+        <details class="reveal"><summary>File tải về gồm những gì?<svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Directo_Price_Upload.xlsx gồm 1 sheet Main với 9 cột Class, Item, Discount, Name, Affects, Locations, Correction, Date 1, Date 2, không tô màu, sẵn để import. Cần đối chiếu thì tải thêm file kiểm tra có tô màu và sheet Report.</p></details>
       </div>
     </div>
   </section>

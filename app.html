@@ -66,6 +66,15 @@ h1, h2, p, ol, dl, dd { margin: 0; font-weight: inherit; }
 .st .i { width: 48%; height: 48%; stroke-width: 2.2; }
 .st.REVIEW::after { content: ""; position: absolute; top: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--dot); border: 2px solid var(--white); }
 .st.cyan { background: var(--cyan); color: var(--ink); }
+.st.EXCLUDED { background: var(--soft); color: var(--muted); }
+.pill.EXCLUDED { background: var(--same-bg); color: var(--gray); }
+.row.out .r-name b, .row.out .r-val span:first-child { text-decoration: line-through; color: var(--muted); }
+.checklist { list-style: none; margin: 18px 0 0; padding: 14px 16px; background: var(--white); border-radius: 8px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.checklist li { display: flex; gap: 10px; align-items: flex-start; }
+.checklist .i { width: 18px; height: 18px; margin-top: 1px; stroke-width: 2.4; }
+.checklist .ok { color: var(--up); } .checklist .no { color: var(--down); } .checklist .warn { color: var(--rev-ink); }
+.export-actions { display: flex; flex-direction: column; gap: 10px; }
+.err-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; font-size: 13px; }
 .st.soft { background: var(--soft); color: var(--gray); }
 
 /* welcome (onboarding) */
@@ -207,6 +216,24 @@ h1, h2, p, ol, dl, dd { margin: 0; font-weight: inherit; }
 .siblings b { font-weight: 500; }
 .siblings div { display: flex; justify-content: space-between; gap: 12px; }
 .pos { font-size: 12px; color: var(--muted); text-align: center; }
+.stats-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.stats-head b { font-size: 14px; font-weight: 500; }
+.stats-head .btn.sm { min-width: 0; height: 36px; padding: 0 16px; }
+.stats-head .btn .i { width: 16px; height: 16px; }
+.stat.edited { background: var(--cyan-soft); box-shadow: inset 0 0 0 1px var(--cyan); }
+.was { display: block; margin-top: 4px; font-size: 12px; color: var(--gray); }
+.meta-line { font-size: 13px; color: var(--gray); }
+.edit-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; padding: 16px; border: 1px solid var(--ink); border-radius: 12px; }
+.edit-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--gray); min-width: 0; }
+.edit-form input { width: 100%; min-width: 0; height: 44px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--white); color: var(--ink); font-size: 16px; font-variant-numeric: tabular-nums; }
+.edit-form input:focus { outline: 2px solid var(--link); outline-offset: 0; border-color: transparent; }
+.edit-form input[aria-invalid="true"] { border-color: var(--down); }
+.edit-form .wide { grid-column: 1 / -1; }
+.edit-form .trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.edit-form .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 14px; }
+.edit-form .field-err { margin: 0; }
+.edit-form .actions { display: flex; gap: 10px; }
+.edit-form .actions .btn { height: 44px; font-size: 15px; }
 
 /* chart */
 .plot { position: relative; height: 182px; }
@@ -276,6 +303,7 @@ button.set-row:hover { background: var(--soft); }
   .side-logo .logo b { font-size: 21px; }
   .side nav, .side-foot { display: flex; flex-direction: column; gap: 4px; }
   .nav-item { display: flex; align-items: center; gap: 14px; height: 48px; padding: 0 14px; border-radius: 12px; color: var(--gray); font-size: 15px; }
+  a.nav-item { text-decoration: none; }
   .nav-item:hover { background: var(--soft); }
   .nav-item[aria-current="page"] { color: var(--black); background: var(--soft); font-weight: 500; }
   .nav-item .badge { margin-left: auto; }
@@ -369,6 +397,9 @@ button.set-row:hover { background: var(--soft); }
   <symbol id="i-ADDED" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
   <symbol id="i-UNCHANGED" viewBox="0 0 24 24"><path d="M6 9h12M6 15h12"/></symbol>
   <symbol id="i-REVIEW" viewBox="0 0 24 24"><path d="M12 7v6M12 17h.01"/></symbol>
+  <symbol id="i-EXCLUDED" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16v4z"/><path d="m13.5 6.5 4 4"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
   <symbol id="mark" viewBox="0 0 32 32"><path d="M4 7a3 3 0 0 1 3-3h10.2c.8 0 1.6.3 2.1.9l8.8 8.8a3 3 0 0 1 0 4.2l-8.6 8.6a3 3 0 0 1-4.2 0l-8.8-8.8A3 3 0 0 1 4 17.2z" fill="#82E9FF" stroke="#222222" stroke-width="2"/><circle cx="10" cy="10" r="2.2" fill="#FFFFFF" stroke="#222222" stroke-width="1.8"/><path d="M13.6 19.4a4.6 4.6 0 0 1 7.8-3.6M22 17.8a4.6 4.6 0 0 1-7.8 3.6" fill="none" stroke="#222222" stroke-width="2" stroke-linecap="round"/><path d="m21.6 13.4-.2 2.4-2.4-.3M14.6 24l.2-2.4 2.4.3" fill="none" stroke="#222222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
 
@@ -409,7 +440,7 @@ button.set-row:hover { background: var(--soft); }
   </div>
   <div class="welcome-body">
     <h1 class="display">Giá mới lên Directo, không sót dòng nào</h1>
-    <p class="lead">Ghép file formula với file template, kiểm tra từng thay đổi, rồi tải về file Directo_Upload.xlsx.</p>
+    <p class="lead">Ghép file formula với file template, kiểm tra từng thay đổi, rồi tải về file Directo_Price_Upload.xlsx đúng mẫu import.</p>
     <ol class="flow">
       <li><b>1</b><span><strong>Tải file</strong> · formula và template của kỳ khuyến mãi</span></li>
       <li><b>2</b><span><strong>Kiểm tra</strong> · mã đổi giá, mã mới, dòng cần xem lại</span></li>
@@ -445,7 +476,7 @@ button.set-row:hover { background: var(--soft); }
       <header class="topbar">
         <span class="top-mark"><svg aria-hidden="true"><use href="#mark"/></svg></span>
         <h1 class="top-title">Tải file</h1>
-        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xử lý"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
       </header>
       <div class="upload-grid">
         <div class="form">
@@ -474,7 +505,7 @@ button.set-row:hover { background: var(--soft); }
       <header class="topbar">
         <span class="top-mark"><svg aria-hidden="true"><use href="#mark"/></svg></span>
         <h1 class="top-title">Kiểm tra</h1>
-        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xử lý"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
       </header>
       <div class="empty-block" id="review-empty" hidden>
         <p>Chưa có gì để kiểm tra. Tải file formula và file template trước.</p>
@@ -491,7 +522,7 @@ button.set-row:hover { background: var(--soft); }
             </div>
           </div>
           <div class="tiles">
-            <button class="tile dark" data-act="issues"><svg class="i" aria-hidden="true"><use href="#i-dl"/></svg><span>Cần xem lại<small id="tile-review"></small></span></button>
+            <button class="tile dark" data-act="issues"><svg class="i" aria-hidden="true"><use href="#i-dl"/></svg><span>Cần xử lý<small id="tile-review"></small></span></button>
             <button class="tile cyan" data-go="export"><svg class="i" aria-hidden="true"><use href="#i-ur"/></svg><span>Xuất file<small id="tile-export"></small></span></button>
           </div>
         </div>
@@ -516,7 +547,7 @@ button.set-row:hover { background: var(--soft); }
       <header class="topbar">
         <button class="back" data-go="review" aria-label="Về danh sách"><svg class="i"><use href="#i-back"/></svg></button>
         <h1 class="top-title" id="detail-title"></h1>
-        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xử lý"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
       </header>
       <div class="panel-body" style="padding: 0" id="detail-phone"></div>
     </section>
@@ -526,7 +557,7 @@ button.set-row:hover { background: var(--soft); }
       <header class="topbar">
         <span class="top-mark"><svg aria-hidden="true"><use href="#mark"/></svg></span>
         <h1 class="top-title">Xuất file</h1>
-        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xử lý"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
       </header>
       <div class="empty-block" id="export-empty" hidden>
         <p>Chưa có file để xuất. Tải 2 file và kiểm tra thay đổi trước.</p>
@@ -542,14 +573,14 @@ button.set-row:hover { background: var(--soft); }
             <span class="file-pill"><span class="st"><svg class="i" aria-hidden="true"><use href="#i-sheet"/></svg></span><span id="export-name"></span></span>
             <p class="rate" id="export-total"></p>
           </div>
-          <div class="amount card"><span>Đổi giá</span><span class="amt"><b id="ex-upd"></b><small>dòng</small></span></div>
+          <div class="amount card"><span>Dòng trong file</span><span class="amt"><b id="ex-out"></b><small>dòng</small></span></div>
+          <div class="amount"><span>Đổi giá</span><span class="amt"><b id="ex-upd"></b><small>dòng</small></span></div>
           <div class="amount"><span>Thêm mới</span><span class="amt"><b id="ex-add"></b><small>dòng</small></span></div>
-          <div class="amount"><span>Không đổi</span><span class="amt"><b id="ex-same"></b><small>dòng</small></span></div>
-          <div class="amount"><span>Cần xem lại</span><span class="amt" id="ex-rev-wrap"><b id="ex-rev"></b><small>dòng</small></span></div>
-          <div id="export-warn"></div>
+          <div class="amount"><span>Chưa xử lý</span><span class="amt" id="ex-left-wrap"><b id="ex-left"></b><small>dòng</small></span></div>
+          <ul class="checklist" id="export-checks" aria-label="Kiểm tra trước khi tải"></ul>
           <p class="save-note" id="save-note"></p>
           <div class="buy-spacer"></div>
-          <button class="btn btn-dark" data-act="save"><svg class="i" aria-hidden="true"><use href="#i-export"/></svg>Tải file xuống</button>
+          <div class="export-actions" id="export-actions"></div>
         </div>
         <div class="done" id="export-done" hidden>
           <svg viewBox="0 0 320 230" role="img" aria-label="File upload đã tải xong">
@@ -570,7 +601,8 @@ button.set-row:hover { background: var(--soft); }
           <h2 class="display" style="font-size: 30px">Đã tải file upload!</h2>
           <p class="lead" id="done-text"></p>
           <div class="welcome-actions" style="padding-top: 18px">
-            <button class="btn btn-dark" data-act="save"><svg class="i" aria-hidden="true"><use href="#i-export"/></svg>Tải lại</button>
+            <button class="btn btn-dark" data-act="save"><svg class="i" aria-hidden="true"><use href="#i-export"/></svg>Tải lại file upload</button>
+            <button class="btn btn-outline" data-act="save-report"><svg class="i" aria-hidden="true"><use href="#i-sheet"/></svg>Tải file kiểm tra (tô màu)</button>
             <div class="pair">
               <button class="btn btn-outline" data-act="reset">Làm lượt mới</button>
               <button class="btn btn-outline" data-go="review">Về kiểm tra</button>
@@ -584,17 +616,19 @@ button.set-row:hover { background: var(--soft); }
       <header class="topbar">
         <span class="top-mark"><svg aria-hidden="true"><use href="#mark"/></svg></span>
         <h1 class="top-title">Hướng dẫn</h1>
-        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xử lý"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
       </header>
       <div class="help-wrap" style="display: flex; flex-direction: column; gap: 22px">
-        <div class="me-card"><span class="st cyan"><svg class="i" aria-hidden="true"><use href="#i-sheet"/></svg></span><div><p class="me-name">PriceSync Tracker</p><p class="me-sub">Đọc 2 file Excel ngay trong trình duyệt và tạo Directo_Upload.xlsx. File gốc không bị sửa.</p></div></div>
+        <div class="me-card"><span class="st cyan"><svg class="i" aria-hidden="true"><use href="#i-sheet"/></svg></span><div><p class="me-name">PriceSync Tracker</p><p class="me-sub">Đọc 2 file Excel ngay trong trình duyệt và tạo Directo_Price_Upload.xlsx đúng mẫu import. File gốc không bị sửa.</p></div></div>
         <div class="panel settings">
           <div class="set-row"><span>File formula<small>Sheet đầu tiên. Cột B mã, C giá, H và I ngày bắt đầu, kết thúc. File trắng chỉ có dòng tiêu đề cũng được.</small></span></div>
           <div class="set-row"><span>File template<small>Sheet đang mở khi lưu file. Đọc cột B–E từ dòng 26: mã, giá mới, ngày bắt đầu, ngày kết thúc.</small></span></div>
-          <div class="set-row"><span>Ghép dòng<small>Cùng mã và cùng kỳ thì cập nhật giá, khác kỳ thì thêm dòng mới, dòng trùng hoàn toàn được bỏ bớt. File formula trắng thì toàn bộ dòng template được điền vào, cột E là Static và cột F là 2.</small></span></div>
+          <div class="set-row"><span>Ghép dòng<small>Cùng mã và cùng kỳ thì cập nhật giá, khác kỳ thì thêm dòng mới, dòng trùng hoàn toàn được bỏ bớt. File formula trắng thì toàn bộ dòng template được điền vào.</small></span></div>
           <div class="set-row"><span>Giá và ngày<small>Giá làm tròn 2 số lẻ (11,285 thành 11,29). Ngày ở mọi kiểu gõ được đưa về dd.mm.yyyy.</small></span></div>
-          <div class="set-row"><span>Cần xem lại<small>Mã có nhiều giá trong cùng kỳ (liên hệ PIC) và dòng có ngày kết thúc trước ngày bắt đầu. Các dòng này vẫn nằm trong file và được ghi ở sheet Report.</small></span></div>
-          <div class="set-row"><span>Màu trong file Excel<span class="legend"><span class="pill UPDATED">Đổi giá</span><span class="pill ADDED">Thêm mới</span><span class="pill REVIEW">Mã lặp lại</span></span></span></div>
+          <div class="set-row"><span>Dòng cần xử lý<small>Trùng mã và kỳ nhưng khác giá, ngày kết thúc trước ngày bắt đầu, ngày không đọc được, giá không phải số. Phải giữ một giá, sửa lại hoặc bỏ dòng trước khi xuất, để file không lỗi khi import.</small></span></div>
+          <div class="set-row"><span>Sửa trực tiếp<small>Mở một dòng ở bước Kiểm tra, bấm Sửa để đổi mã, giá, ngày, Class, Affects, Locations, Correction. Số mới được kiểm tra lại ngay và ghi vào file xuất ra; ô đã sửa hiện số gốc bên dưới, bấm “Dùng lại số gốc” để hoàn tác.</small></span></div>
+          <div class="set-row"><span>File xuất ra<small>Directo_Price_Upload.xlsx: 1 sheet Main, 9 cột Class · Item · Discount · Name · Affects · Locations · Correction · Date 1 · Date 2. Giá 2 số lẻ; Affects, Locations, Correction là số (mặc định 8, 2, 0); ngày dd.mm.yyyy; không tô màu. File được đọc lại để kiểm tra trước khi tải.</small></span></div>
+          <div class="set-row"><span>Màu trong file kiểm tra<span class="legend"><span class="pill UPDATED">Đổi giá</span><span class="pill ADDED">Thêm mới</span><span class="pill REVIEW">Mã lặp lại</span></span></span></div>
           <a class="set-row" href="./" data-landing hidden style="text-decoration: none; color: inherit"><span>Trang giới thiệu PriceSync Tracker</span><svg class="i" aria-hidden="true"><use href="#i-chev-r"/></svg></a>
           <button class="set-row" data-act="welcome"><span>Xem lại màn hình giới thiệu</span><svg class="i" aria-hidden="true"><use href="#i-chev-r"/></svg></button>
         </div>
@@ -886,9 +920,141 @@ async function buildUpload(formulaBuf, templateBuf) {
   const removed = removeDuplicatePromoRows(ws);
   highlightDuplicateItemCodes(ws);
   const pivot = buildReportSheet(wb, ws, templateRows, formulaItems, updated, added);
-  return { wb, result: { template_records: templateRows.length, updated: updated.size, added: added.length, removed_duplicates: removed, rows: previewRows(ws, pivot, changes) } };
+  return { wb, result: { template_records: templateRows.length, updated: updated.size, added: added.length, removed_duplicates: removed, rows: previewRows(ws, pivot, changes), template: templateRows } };
 }
 /* ENGINE END */
+
+/* The file Directo imports: one sheet "Main" with the 9 columns of Directo_Price_Upload.xlsx, values only, no colours. */
+const UPLOAD_HEADER = ['Class', 'Item', 'Discount', 'Name', 'Affects', 'Locations', 'Correction', 'Date 1', 'Date 2'];
+const UPLOAD_DATE_FMT = 'dd\\.mm\\.yyyy';
+const UPLOAD_DEFAULTS = { E: 8, F: 2, G: 0 };
+const ERR = {
+  conflict: ['Trùng kỳ', 'Cùng mã, cùng kỳ nhưng có nhiều giá. Directo chỉ nhận một giá: giữ một giá, sửa lại kỳ, hoặc bỏ dòng.'],
+  order: ['Ngày sai', 'Ngày kết thúc trước ngày bắt đầu. Bấm Sửa để chỉnh ngày, hoặc bỏ dòng này khỏi file.'],
+  date: ['Ngày lỗi', 'Ô ngày không đọc được thành ngày. Bấm Sửa để chọn lại ngày, hoặc bỏ dòng này khỏi file.'],
+  price: ['Giá lỗi', 'Giá không phải số lớn hơn 0 (có thể là chữ, hoặc công thức chưa có kết quả). Bấm Sửa để nhập giá đúng.'],
+};
+const asNumber = v => typeof v === 'number' && isFinite(v) ? v : typeof v === 'string' && /^\s*-?\d+(\.\d+)?\s*$/.test(v) ? Number(v) : null;
+function uploadDate(v) {
+  v = shown(v);
+  if (v == null || v === '') return null;
+  const iso = ndk(v);
+  if (!ISO.test(iso)) return { bad: pyStr(v) };
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+}
+// one entry per row that has an item code, in the same order as previewRows()
+function uploadRows(ws) {
+  const out = [];
+  for (let r = 2, last = ws.rowCount; r <= last; r++) {
+    const item = cleanKey(valueAt(ws, r, 2));
+    if (!item) continue;
+    const C = round2(shown(valueAt(ws, r, 3)));
+    out.push({
+      item,
+      A: shown(valueAt(ws, r, 1)) ?? null,
+      B: /^[1-9]\d{0,14}$/.test(item) ? Number(item) : item,
+      C: typeof C === 'string' ? (asNumber(C) ?? C) : C,
+      E: asNumber(shown(valueAt(ws, r, 5))) ?? UPLOAD_DEFAULTS.E,
+      F: asNumber(shown(valueAt(ws, r, 6))) ?? UPLOAD_DEFAULTS.F,
+      G: asNumber(shown(valueAt(ws, r, 7))) ?? UPLOAD_DEFAULTS.G,
+      H: uploadDate(valueAt(ws, r, 8)),
+      I: uploadDate(valueAt(ws, r, 9)),
+    });
+  }
+  return out;
+}
+const dateKey = d => d == null ? '' : d instanceof Date ? isoDay(d) : 'bad:' + d.bad;
+const uploadKey = u => JSON.stringify([u.item, dateKey(u.H), dateKey(u.I)]);
+// the editable columns as the edit form shows them; an input left at this text is not touched on save
+const EDIT_TEXT = {
+  B: u => u.item,
+  C: u => typeof u.C === 'number' ? u.C.toFixed(2).replace('.', ',') : String(u.C ?? ''),
+  H: u => u.H instanceof Date ? isoDay(u.H) : '',
+  I: u => u.I instanceof Date ? isoDay(u.I) : '',
+  A: u => String(u.A ?? ''),
+  E: u => String(u.E), F: u => String(u.F), G: u => String(u.G),
+};
+const EDIT_LABEL = { B: 'Mã', C: 'Giá', H: 'Từ ngày', I: 'Đến ngày', A: 'Class', E: 'Affects', F: 'Locations', G: 'Correction' };
+// form values -> new upload row, or the inputs that are wrong
+function editedRow(u, form) {
+  const next = { ...u }, bad = [];
+  for (const el of form.elements) {
+    const f = el.name, v = el.value.trim();
+    if (!EDIT_TEXT[f] || (el.value === el.defaultValue && !el.validity.badInput)) continue;
+    if (f === 'B') {
+      const item = cleanKey(v);
+      if (!item) bad.push([el, 'Mã không được để trống.']);
+      else Object.assign(next, { item, B: /^[1-9]\d{0,14}$/.test(item) ? Number(item) : item });
+    } else if (f === 'C') {
+      const n = asNumber(v.replace(/\s/g, '').replace(',', '.'));
+      if (n == null || round2(n) <= 0) bad.push([el, 'Giá phải là số lớn hơn 0, ví dụ 12,50.']);
+      else next.C = round2(n);
+    } else if (f === 'H' || f === 'I') {
+      if (el.validity.badInput) bad.push([el, `${EDIT_LABEL[f]} chưa nhập đủ ngày, tháng, năm.`]);
+      else next[f] = v ? uploadDate(v) : null;
+    } else if (f === 'A') next.A = v || null;
+    else {
+      const n = asNumber(v);
+      if (n == null) bad.push([el, `${EDIT_LABEL[f]} phải là số.`]);
+      else next[f] = n;
+    }
+  }
+  if (next.H instanceof Date && next.I instanceof Date && next.H > next.I) bad.push([form.elements.I, 'Đến ngày phải bằng hoặc sau Từ ngày.']);
+  return { next, bad };
+}
+// rows Directo would reject; excluded rows are left out of the file and of the checks
+function uploadProblems(rows, excluded) {
+  const errs = new Map(), groups = new Map();
+  const add = (i, code) => errs.set(i, [...(errs.get(i) || []), code]);
+  rows.forEach((u, i) => {
+    if (excluded.has(i)) return;
+    if (typeof u.C !== 'number' || !isFinite(u.C) || u.C <= 0) add(i, 'price');
+    if (u.H?.bad != null || u.I?.bad != null) add(i, 'date');
+    else if (u.H && u.I && u.H > u.I) add(i, 'order');
+    groups.set(uploadKey(u), [...(groups.get(uploadKey(u)) || []), i]);
+  });
+  for (const ids of groups.values()) if (ids.length > 1) ids.forEach(i => add(i, 'conflict'));
+  return errs;
+}
+function buildCleanUpload(rows) {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Main', { views: [{ state: 'frozen', xSplit: 0, ySplit: 1, topLeftCell: 'A2', activeCell: 'A2' }] });
+  ws.addRow(UPLOAD_HEADER);
+  ws.getCell('C1').numFmt = '0.00';
+  ws.getCell('H1').numFmt = UPLOAD_DATE_FMT;
+  ws.getCell('I1').numFmt = UPLOAD_DATE_FMT;
+  for (const u of rows) {
+    const row = ws.addRow([u.A === '' ? null : u.A, u.B, u.C, null, u.E, u.F, u.G, u.H, u.I]);
+    row.getCell(3).numFmt = '0.00';
+    if (u.H) row.getCell(8).numFmt = UPLOAD_DATE_FMT;
+    if (u.I) row.getCell(9).numFmt = UPLOAD_DATE_FMT;
+  }
+  return wb;
+}
+// read the finished file back and check it the way Directo will read it
+async function checkUploadFile(buf, expectedRows) {
+  const wb = await loadBook(buf), out = [];
+  if (wb.worksheets.length !== 1 || wb.worksheets[0].name !== 'Main') out.push('file phải có đúng 1 sheet tên Main');
+  const ws = wb.worksheets[0];
+  if (UPLOAD_HEADER.some((h, i) => raw(valueAt(ws, 1, i + 1)) !== h)) out.push('dòng tiêu đề không đúng 9 cột mẫu');
+  if (ws.rowCount - 1 !== expectedRows) out.push(`có ${ws.rowCount - 1} dòng thay vì ${expectedRows}`);
+  const asDate = cell => cell.value instanceof Date ? cell.value : typeof cell.value === 'number' && /y/i.test(cell.numFmt || '') ? new Date(Math.round((cell.value - 25569) * 864e5)) : cell.value;
+  const seen = new Set();
+  for (let r = 2; r <= ws.rowCount && out.length < 6; r++) {
+    const cell = c => cellAt(ws, r, c), bad = msg => out.push(`dòng ${r}: ${msg}`);
+    const item = cleanKey(cell(2).value), p = cell(3).value, d1 = asDate(cell(8)), d2 = asDate(cell(9));
+    if (!item) bad('thiếu mã');
+    if (typeof p !== 'number' || p <= 0 || Math.round(p * 100) / 100 !== p) bad('giá không hợp lệ');
+    if ([5, 6, 7].some(c => typeof cell(c).value !== 'number')) bad('Affects, Locations, Correction phải là số');
+    if ((d1 != null && !(d1 instanceof Date)) || (d2 != null && !(d2 instanceof Date))) bad('ngày không hợp lệ');
+    else if (d1 && d2 && d1 > d2) bad('ngày kết thúc trước ngày bắt đầu');
+    const key = JSON.stringify([item, d1 ? isoDay(d1) : '', d2 ? isoDay(d2) : '']);
+    if (seen.has(key)) bad('trùng mã và kỳ'); else seen.add(key);
+  }
+  return out;
+}
+/* UPLOAD END */
 
 async function describeFile(buf, name, role) {
   const wb = await loadBook(buf);
@@ -910,37 +1076,67 @@ const ROLE = {
   formula: { label: 'File formula', what: 'giá hiện tại', hint: 'Sheet đầu tiên · cột B–I từ dòng 2 · file trắng cũng được', empty: 'Giá hiện tại' },
   template: { label: 'File template', what: 'giá mới', hint: 'Sheet đang mở · cột B–E từ dòng 26', empty: 'Giá mới cần cập nhật' },
 };
-const STATUS = { REVIEW: 'Cần xem', UPDATED: 'Đổi giá', ADDED: 'Thêm mới', UNCHANGED: 'Không đổi' };
+const STATUS = { REVIEW: 'Cần xử lý', UPDATED: 'Đổi giá', ADDED: 'Thêm mới', UNCHANGED: 'Không đổi', EXCLUDED: 'Đã bỏ' };
 const state = {
   view: '', busy: false, files: { formula: null, template: null }, errors: {}, pickRole: 'formula',
-  wb: null, rows: [], meta: null, saved: null, reviewed: new Set(), nameMode: 'plain',
+  wb: null, rows: [], upload: [], excluded: new Set(), edits: new Map(), editing: null, problems: new Map(), meta: null, saved: null, savedRows: 0, skipped: 0, nameMode: 'plain',
   filter: 'all', query: '', limit: 120, chartFilter: 'all', item: null, nav: [],
 };
 const has = () => state.rows.length > 0;
 const today = () => isoDay(new Date(Date.now() - new Date().getTimezoneOffset() * 60000));
-const outName = () => state.nameMode === 'dated' ? `Directo_Upload_${day(today())}.xlsx` : 'Directo_Upload.xlsx';
+const outName = () => state.nameMode === 'dated' ? `Directo_Price_Upload_${day(today())}.xlsx` : 'Directo_Price_Upload.xlsx';
 
-function setResult(res) {
+const pctOf = r => r.status === 'UPDATED' && typeof r.price === 'number' && typeof r.old_price === 'number' && r.old_price ? (r.price - r.old_price) / r.old_price * 100 : null;
+function setResult(res, upload) {
+  const tpl = new Map();
+  for (const t of res.template || []) { const k = JSON.stringify([t.item, t.start, t.end]); tpl.set(k, [...(tpl.get(k) || []), t.price]); }
   state.rows = res.rows.map((r, idx) => {
-    const issue = r.price_conflict || r.bad_date;
-    const pct = r.status === 'UPDATED' && typeof r.price === 'number' && typeof r.old_price === 'number' && r.old_price ? (r.price - r.old_price) / r.old_price * 100 : null;
-    return { ...r, idx, issue, pct, kind: issue ? 'REVIEW' : r.status };
+    const prices = tpl.get(JSON.stringify([r.item, r.start, r.end])) || [];
+    const tplDup = new Set(prices.map(String)).size > 1 ? prices : null;
+    return { ...r, idx, pct: pctOf(r), tplDup };
   });
+  state.upload = upload;
+  state.excluded = new Set(); state.edits = new Map(); state.editing = null;
+  annotate();
   state.meta = { template: res.template_records, removed: res.removed_duplicates };
-  state.reviewed = new Set();
-  state.saved = null;
+  state.saved = null; state.skipped = 0;
   const c = counts();
   state.filter = c.REVIEW ? 'REVIEW' : c.UPDATED ? 'UPDATED' : 'all';
   state.item = null; state.chartFilter = 'all'; state.animRows = true; state.countUp = true;
 }
-function clearResult() { Object.assign(state, { wb: null, rows: [], meta: null, saved: null, item: null }); }
+function annotate() {
+  state.problems = uploadProblems(state.upload, state.excluded);
+  for (const r of state.rows) {
+    r.excluded = state.excluded.has(r.idx);
+    r.edited = state.edits.has(r.idx);
+    r.errs = state.problems.get(r.idx) || [];
+    r.issue = r.errs.length > 0;
+    r.kind = r.excluded ? 'EXCLUDED' : r.issue ? 'REVIEW' : r.status;
+  }
+}
+function clearResult() { Object.assign(state, { wb: null, rows: [], upload: [], excluded: new Set(), edits: new Map(), editing: null, problems: new Map(), meta: null, saved: null, item: null }); }
+// state.edits keeps each edited row's original upload + preview values, so "Dùng lại số gốc" can put them back
+function applyEdit(idx, next) {
+  const u = state.upload[idx], r = state.rows[idx];
+  if (!state.edits.has(idx)) state.edits.set(idx, { u: { ...u }, r: { item: r.item, start: r.start, end: r.end, price: r.price, old_price: r.old_price, status: r.status, tplDup: r.tplDup } });
+  const snap = state.edits.get(idx), d = v => v instanceof Date ? isoDay(v) : v?.bad ?? '';
+  Object.assign(u, next);
+  Object.assign(r, snap.r, { item: u.item, price: u.C, start: u.H === snap.u.H ? snap.r.start : d(u.H), end: u.I === snap.u.I ? snap.r.end : d(u.I) });
+  if (r.price !== snap.r.price) {
+    r.tplDup = null;
+    if (r.status === 'UNCHANGED') Object.assign(r, { status: 'UPDATED', old_price: snap.r.price });
+  }
+  r.pct = pctOf(r);
+  if (Object.keys(EDIT_TEXT).every(f => EDIT_TEXT[f](u) === EDIT_TEXT[f](snap.u))) state.edits.delete(idx);
+}
 function counts() {
-  const c = { all: 0, REVIEW: 0, UPDATED: 0, ADDED: 0, UNCHANGED: 0, conflicts: 0, badDates: 0, up: 0, down: 0, left: 0 };
+  const c = { all: 0, REVIEW: 0, UPDATED: 0, ADDED: 0, UNCHANGED: 0, EXCLUDED: 0, conflict: 0, order: 0, date: 0, price: 0, up: 0, down: 0, left: 0, out: 0, tplDup: 0, edited: 0 };
   for (const r of state.rows) {
     c.all++; c[r.kind]++;
-    if (r.price_conflict) c.conflicts++;
-    if (r.bad_date) c.badDates++;
-    if (r.issue && !state.reviewed.has(r.idx)) c.left++;
+    for (const e of r.errs) c[e]++;
+    if (r.issue) c.left++; else if (!r.excluded) c.out++;
+    if (r.tplDup && !r.excluded) c.tplDup++;
+    if (r.edited && !r.excluded) c.edited++;
     if (r.pct > 0) c.up++; else if (r.pct < 0) c.down++;
   }
   return c;
@@ -968,39 +1164,69 @@ function plotHTML(values, fmt, zero) {
 
 function rowHTML(r, i = 0) {
   let second;
-  if (r.issue) second = `<span class="down">${r.price_conflict ? 'Khác giá' : 'Ngày sai'}</span>`;
+  if (r.excluded) second = `<span class="muted">Đã bỏ</span>`;
+  else if (r.issue) second = `<span class="down">${ERR[r.errs[0]][0]}</span>`;
+  else if (r.tplDup) second = `<span class="down">${r.tplDup.length} giá trong template</span>`;
   else if (r.kind === 'UPDATED') second = r.pct == null ? `<span class="gray">Đổi giá</span>` : `<span class="${r.pct > 0 ? 'up' : r.pct < 0 ? 'down' : 'gray'}">${signed(r.pct)}</span>`;
   else if (r.kind === 'ADDED') second = `<span class="new">Thêm mới</span>`;
   else second = `<span class="muted">Không đổi</span>`;
-  return `<button class="row${state.animRows ? ' anim' : ''}" style="--i:${Math.min(i, 12)}" data-act="open-row" data-idx="${r.idx}" aria-current="${state.item === r.idx && wide()}">
+  return `<button class="row${state.animRows ? ' anim' : ''}${r.excluded ? ' out' : ''}" style="--i:${Math.min(i, 12)}" data-act="open-row" data-idx="${r.idx}" aria-current="${state.item === r.idx && wide()}">
     <span class="st ${r.kind}">${icon(r.kind)}</span>
-    <span class="r-name"><b>${esc(r.item)}${state.reviewed.has(r.idx) ? icon('check') : ''}</b><span>${period(r)}</span></span>
+    <span class="r-name"><b>${esc(r.item)}</b><span>${period(r)}${r.edited ? ' · đã sửa' : ''}</span></span>
     <span class="r-val"><span>${price(r.price)}</span>${second}</span></button>`;
 }
 
 function detailHTML(r) {
   const same = state.rows.filter(x => x.item === r.item);
-  const change = r.status === 'UPDATED' && r.pct != null ? `<span class="${r.pct > 0 ? 'up' : 'down'}">${signed(r.pct)}</span>`
+  const change = r.status === 'UPDATED' && r.pct != null && r.kind === 'UPDATED' ? `<span class="${r.pct > 0 ? 'up' : 'down'}">${signed(r.pct)}</span>`
     : `<span class="pill ${r.kind}">${STATUS[r.kind]}</span>`;
-  const notes = [];
-  if (r.price_conflict) notes.push(`<div class="notice err">${icon('alert')}<p>Mã này có nhiều giá trong cùng kỳ khuyến mãi. Liên hệ PIC để chốt một giá.</p></div>`);
-  if (r.bad_date) notes.push(`<div class="notice err">${icon('alert')}<p>Ngày kết thúc trước ngày bắt đầu. Sửa ngày trong file template rồi tải lại.</p></div>`);
-  const pos = state.nav.indexOf(r.idx), seen = state.reviewed.has(r.idx);
+  const notes = r.errs.map(e => `<div class="notice err">${icon('alert')}<p><b>${ERR[e][0]}.</b> ${ERR[e][1]}</p></div>`);
+  if (r.tplDup) notes.push(`<div class="notice warn">${icon('alert')}<p>File template có ${r.tplDup.length} giá cho mã này trong cùng kỳ: ${r.tplDup.map(price).join('; ')}. App đang dùng giá cuối cùng (${price(r.price)}). Nếu không đúng, bấm Sửa để nhập giá khác.</p></div>`);
+  if (r.excluded) notes.push(`<div class="notice warn">${icon('alert')}<p>Dòng này đã được bỏ khỏi file upload. Bấm nút hoàn tác để đưa lại vào file.</p></div>`);
+  const keep = r.errs.includes('conflict') ? `<button class="btn btn-cyan" data-act="keep">${icon('check')}Giữ giá ${price(r.price)}, bỏ các giá khác</button>` : '';
+  const pos = state.nav.indexOf(r.idx);
   return `<div class="r-head"><span class="st ${r.kind}">${icon(r.kind)}</span><div class="h-name"><b>${esc(r.item)}</b><span>${period(r)}</span></div><div class="h-val"><b>${price(r.price)}</b>${change}</div></div>
     <div class="bs-row">
       <button class="pill-btn dark" data-act="step" data-dir="-1" ${pos <= 0 ? 'aria-disabled="true"' : ''}>${icon('prev')}Dòng trước</button>
       <button class="pill-btn cyan" data-act="step" data-dir="1" ${pos < 0 || pos >= state.nav.length - 1 ? 'aria-disabled="true"' : ''}>Dòng sau${icon('next')}</button>
-      <button class="mark-btn" data-act="mark" aria-pressed="${seen}" aria-label="${seen ? 'Bỏ đánh dấu đã xem' : 'Đánh dấu đã xem'}" title="Đánh dấu đã xem">${icon('check')}</button>
+      <button class="mark-btn" data-act="exclude" aria-pressed="${r.excluded}" aria-label="${r.excluded ? 'Đưa dòng này lại vào file' : 'Bỏ dòng này khỏi file'}" title="${r.excluded ? 'Đưa lại vào file' : 'Bỏ khỏi file'}">${icon(r.excluded ? 'undo' : 'EXCLUDED')}</button>
     </div>
-    ${notes.join('')}
+    ${notes.join('')}${keep}
+    ${state.editing === r.idx ? editHTML(r) : valuesHTML(r)}
+    ${same.length > 1 ? `<div class="siblings"><b>Mã này có ${same.length} dòng</b>${same.map(x => `<div><span class="gray">${period(x)}${x.excluded ? ' · đã bỏ' : ''}</span><span class="num">${price(x.price)}</span></div>`).join('')}</div>` : ''}
+    <p class="pos">${pos + 1} / ${state.nav.length} dòng trong danh sách đang lọc</p>`;
+}
+
+function valuesHTML(r) {
+  const u = state.upload[r.idx], snap = state.edits.get(r.idx)?.u;
+  const dateText = v => v instanceof Date ? day(isoDay(v)) : v?.bad != null ? esc(v.bad) : '—';
+  const stat = (f, label, value, was) => {
+    const changed = snap && EDIT_TEXT[f](snap) !== EDIT_TEXT[f](u);
+    return `<div class="stat${changed ? ' edited' : ''}"><p>${label}</p><b>${value}</b>${changed ? `<span class="was">Gốc: ${was}</span>` : ''}</div>`;
+  };
+  return `<div class="stats-head"><b>Số liệu trong file</b><button class="btn btn-outline sm" data-act="edit">${icon('edit')}Sửa</button></div>
     <div class="stats">
       <div class="stat"><p>Giá cũ</p><b>${r.status === 'UPDATED' ? price(r.old_price) : '—'}</b></div>
-      <div class="stat"><p>Giá mới</p><b>${price(r.price)}</b></div>
-      <div class="stat"><p>Từ ngày</p><b>${day(r.start)}</b></div>
-      <div class="stat"><p>Đến ngày</p><b>${day(r.end)}</b></div>
+      ${stat('C', 'Giá mới', price(r.price), snap && price(snap.C))}
+      ${stat('H', 'Từ ngày', day(r.start), snap && dateText(snap.H))}
+      ${stat('I', 'Đến ngày', day(r.end), snap && dateText(snap.I))}
     </div>
-    ${same.length > 1 ? `<div class="siblings"><b>Mã này có ${same.length} dòng</b>${same.map(x => `<div><span class="gray">${period(x)}</span><span class="num">${price(x.price)}</span></div>`).join('')}</div>` : ''}
-    <p class="pos">${pos + 1} / ${state.nav.length} dòng trong danh sách đang lọc${seen ? ' · đã xem' : ''}</p>`;
+    <p class="meta-line">Class ${esc(u.A ?? '—')} · Affects ${esc(u.E)} · Locations ${esc(u.F)} · Correction ${esc(u.G)}</p>
+    ${snap ? `<p class="meta-line">Bạn đã sửa dòng này${snap.item !== u.item ? ` (mã gốc ${esc(snap.item)})` : ''}. <button class="link" data-act="unedit">Dùng lại số gốc</button></p>` : ''}`;
+}
+function editHTML(r) {
+  const u = state.upload[r.idx];
+  const field = (f, attrs = '', cls = '') => `<label${cls ? ` class="${cls}"` : ''}>${EDIT_LABEL[f]}<input name="${f}" value="${esc(EDIT_TEXT[f](u))}" autocomplete="off" ${attrs}>${
+    u[f]?.bad != null ? `<span class="was">Trong file: “${esc(u[f].bad)}” (không phải ngày)</span>` : ''}</label>`;
+  return `<form class="edit-form" data-idx="${r.idx}" novalidate>
+      ${field('B', 'spellcheck="false" autocapitalize="characters"', 'wide')}
+      ${field('C', 'inputmode="decimal"')}
+      ${field('A', 'spellcheck="false"')}
+      <div class="pair wide">${field('H', 'type="date"')}${field('I', 'type="date"')}</div>
+      <div class="trio wide">${field('E', 'inputmode="decimal"')}${field('F', 'inputmode="decimal"')}${field('G', 'inputmode="decimal"')}</div>
+      <p class="field-err wide" role="alert" hidden></p>
+      <div class="actions wide"><button type="submit" class="btn btn-dark">${icon('check')}Lưu</button><button type="button" class="btn btn-outline" data-act="cancel-edit">Huỷ</button></div>
+    </form>`;
 }
 
 const RENDER = {
@@ -1035,7 +1261,6 @@ const RENDER = {
           : `<button class="filebox none${err ? ' bad' : ''}" data-act="pick" data-role="${role}"><span class="st soft">${icon('file')}</span>
             <span class="fb-text"><b>Chưa chọn file</b><span>${R.empty} · kéo thả hoặc bấm để chọn</span></span><span class="fb-act">Chọn…</span></button>`}
         <p class="field-hint">${R.hint}</p>
-        ${role === 'formula' && f && !f.rows && !f.header ? '<p class="field-hint">File chưa có dòng tiêu đề, dòng 1 của file xuất ra sẽ để trống.</p>' : ''}
         ${err ? `<p class="field-err">${icon('alert')}${esc(err)}</p>` : ''}`;
     }
     state.popRole = null;
@@ -1046,19 +1271,22 @@ const RENDER = {
     if (!has()) return;
     const c = counts(), f = state.files;
     $('#who').innerHTML = `<span class="st cyan">${icon('sheet')}</span><span><span class="who-name">${esc(f.formula.name)}</span><span class="who-sub">+ ${esc(f.template.name)} · ${num.format(state.meta.template)} dòng template</span></span>`;
-    $('#total').innerHTML = `<span>${num.format(c.all)}</span><small> dòng</small>`;
-    if (state.countUp) { countTo($('#total span'), c.all); state.countUp = false; }
+    $('#total').innerHTML = `<span>${num.format(c.all - c.EXCLUDED)}</span><small> dòng</small>`;
+    if (state.countUp) { countTo($('#total span'), c.all - c.EXCLUDED); state.countUp = false; }
     $('#delta').innerHTML = `<span class="up">+${num.format(c.ADDED)} thêm mới</span><span class="gray">${num.format(c.UPDATED)} đổi giá</span>`;
     const parts = [];
-    if (c.conflicts) parts.push(`${num.format(c.conflicts)} dòng cùng kỳ khác giá, cần liên hệ PIC`);
-    if (c.badDates) parts.push(`${num.format(c.badDates)} dòng có ngày kết thúc trước ngày bắt đầu`);
+    if (c.conflict) parts.push(`${num.format(c.conflict)} dòng trùng mã và kỳ nhưng khác giá`);
+    if (c.order) parts.push(`${num.format(c.order)} dòng ngày kết thúc trước ngày bắt đầu`);
+    if (c.date) parts.push(`${num.format(c.date)} dòng ngày không đọc được`);
+    if (c.price) parts.push(`${num.format(c.price)} dòng giá lỗi`);
+    const excludedNote = (c.edited ? ` Đã sửa ${num.format(c.edited)} dòng.` : '') + (c.EXCLUDED ? ` Đã bỏ ${num.format(c.EXCLUDED)} dòng khỏi file.` : '') + (c.tplDup ? ` ${num.format(c.tplDup)} dòng có nhiều giá trong template, đang dùng giá cuối cùng.` : '');
     $('#review-finding').className = `finding${c.left ? ' alert' : ''}`;
-    $('#review-finding').innerHTML = c.REVIEW ? `<b>${num.format(c.left)} / ${num.format(c.REVIEW)} dòng cần xem trước khi upload.</b> ${parts.join('; ')}.`
-      : !f.formula.rows ? `Đã điền <b>${num.format(c.all)} dòng</b> từ template vào file formula trắng. Không có dòng nào cần xem lại.`
-      : `Không có dòng nào cần xem lại.${state.meta.removed ? ` Đã bỏ ${num.format(state.meta.removed)} dòng trùng.` : ''}`;
-    $('#tile-review').textContent = c.REVIEW ? `${num.format(c.left)} dòng chưa xem` : 'Không có dòng nào';
-    $('#tile-export').textContent = `${num.format(c.all)} dòng · Directo_Upload.xlsx`;
-    const tabs = [['REVIEW', 'Cần xem'], ['UPDATED', 'Đổi giá'], ['ADDED', 'Thêm mới'], ['UNCHANGED', 'Không đổi'], ['all', 'Tất cả']];
+    $('#review-finding').innerHTML = c.left ? `<b>${num.format(c.left)} dòng cần xử lý trước khi xuất file.</b> ${parts.join('; ')}.${excludedNote}`
+      : !f.formula.rows ? `Đã điền <b>${num.format(c.out)} dòng</b> từ template vào file formula trắng. Không có dòng lỗi.${excludedNote}`
+      : `Không có dòng lỗi.${state.meta.removed ? ` Đã bỏ ${num.format(state.meta.removed)} dòng trùng hoàn toàn.` : ''}${excludedNote}`;
+    $('#tile-review').textContent = c.left ? `${num.format(c.left)} dòng chưa xử lý` : 'Không có dòng lỗi';
+    $('#tile-export').textContent = `${num.format(c.out)} dòng · ${outName()}`;
+    const tabs = [['REVIEW', 'Cần xử lý'], ['UPDATED', 'Đổi giá'], ['ADDED', 'Thêm mới'], ['UNCHANGED', 'Không đổi'], ...(c.EXCLUDED ? [['EXCLUDED', 'Đã bỏ']] : []), ['all', 'Tất cả']];
     $('#tabs').innerHTML = tabs.map(([k, l]) => `<button role="tab" data-act="filter" data-filter="${k}" aria-selected="${state.filter === k}">${l}<sup>${num.format(k === 'all' ? c.all : c[k])}</sup></button>`).join('');
     const rows = filtered();
     state.nav = rows.map(r => r.idx);
@@ -1092,17 +1320,35 @@ const RENDER = {
     $('#export-done').hidden = !state.saved;
     document.querySelectorAll('.seg [role=tab]').forEach(t => t.setAttribute('aria-selected', t.dataset.mode === state.nameMode));
     $('#export-name').textContent = outName();
-    $('#export-total').textContent = `${num.format(c.all)} dòng`;
+    $('#export-total').textContent = `${num.format(c.out)} dòng`;
+    $('#ex-out').textContent = num.format(c.out);
     $('#ex-upd').textContent = num.format(c.UPDATED);
     $('#ex-add').textContent = num.format(c.ADDED);
-    $('#ex-same').textContent = num.format(c.UNCHANGED);
-    $('#ex-rev').textContent = num.format(c.REVIEW);
-    $('#ex-rev-wrap').classList.toggle('alert', c.REVIEW > 0);
-    $('#export-warn').innerHTML = c.REVIEW ? `<div class="notice warn">${icon('alert')}<p>${num.format(c.REVIEW)} dòng cần xem lại vẫn nằm trong file và được ghi ở sheet Report.${c.left ? ` Còn ${num.format(c.left)} dòng bạn chưa xem.` : ''}</p></div>` : '';
+    $('#ex-left').textContent = num.format(c.left);
+    $('#ex-left-wrap').classList.toggle('alert', c.left > 0);
+    const check = (ok, text) => `<li class="${ok ? 'ok' : 'no'}">${icon(ok ? 'check' : 'alert')}<span>${text}</span></li>`;
+    const errRows = state.rows.filter(r => r.issue).slice(0, 5)
+      .map(r => `<button class="link" data-act="open-issue" data-idx="${r.idx}">${esc(r.item)} · ${ERR[r.errs[0]][0]}</button>`).join('');
+    $('#export-checks').innerHTML = [
+      check(true, '1 sheet <b>Main</b>, đúng 9 cột mẫu Directo, không tô màu'),
+      check(true, 'Giá 2 số lẻ; Affects, Locations, Correction là số; ngày dd.mm.yyyy'),
+      check(!c.conflict, c.conflict ? `${num.format(c.conflict)} dòng trùng mã và kỳ nhưng khác giá` : 'Không có mã trùng kỳ'),
+      check(!c.order && !c.date, c.order + c.date ? `${num.format(c.order + c.date)} dòng ngày sai hoặc không đọc được` : 'Ngày hợp lệ'),
+      check(!c.price, c.price ? `${num.format(c.price)} dòng giá lỗi` : 'Giá hợp lệ'),
+      ...(c.tplDup ? [`<li class="warn">${icon('alert')}<span>${num.format(c.tplDup)} dòng có nhiều giá trong template, đang dùng giá cuối cùng (không chặn xuất file)</span></li>`] : []),
+      ...(c.edited ? [check(true, `${num.format(c.edited)} dòng bạn sửa trực tiếp được ghi theo số mới (file kiểm tra tô màu vẫn giữ số gốc từ 2 file)`)] : []),
+      check(true, 'File được đọc lại để kiểm tra ngay sau khi tạo'),
+    ].join('') + (errRows ? `<li><span class="err-list">${errRows}</span></li>` : '');
+    $('#export-actions').innerHTML = c.left
+      ? `<button class="btn btn-dark" data-act="save" data-skip="1">${icon('export')}Bỏ ${num.format(c.left)} dòng lỗi và tải file</button>
+         <button class="btn btn-outline" data-act="issues">Xử lý ở bước Kiểm tra</button>`
+      : `<button class="btn btn-dark" data-act="save">${icon('export')}Tải file xuống</button>`;
+    $('#export-actions').innerHTML += `<button class="btn btn-outline" data-act="save-report">${icon('sheet')}Tải file kiểm tra (tô màu)</button>`;
     $('#save-note').textContent = window.claude?.use ? 'Trình duyệt sẽ hỏi bạn xác nhận trước khi lưu file.' : 'File được tải về thư mục Tải xuống (Downloads) của trình duyệt.';
     if (state.saved) {
-      $('#done-text').innerHTML = `Đã tạo <b>${num.format(c.all)} dòng</b> trong file <b>${esc(state.saved)}</b>, sẵn sàng import vào Directo.`
-        + (c.REVIEW ? `<br><b class="down">${num.format(c.REVIEW)} dòng</b> cần xem lại được ghi trong sheet Report.` : '');
+      $('#done-text').innerHTML = `Đã tạo <b>${num.format(state.savedRows)} dòng</b> trong <b>${esc(state.saved)}</b>: 1 sheet Main đúng mẫu Directo, đã đọc lại và không thấy lỗi.`
+        + (state.skipped ? `<br><b class="down">${num.format(state.skipped)} dòng lỗi</b> đã được bỏ ra khỏi file.` : '')
+        + (c.EXCLUDED ? `<br>${num.format(c.EXCLUDED)} dòng bạn đã bỏ không nằm trong file.` : '');
     }
   },
   help() {},
@@ -1157,6 +1403,27 @@ function toast(msg) {
   clearTimeout(toast.timer);
   if (msg) toast.timer = setTimeout(() => toast(''), 6000);
 }
+function repaint() {
+  if (wide() || state.view !== 'detail') RENDER[state.view === 'export' ? 'export' : 'review'](); else RENDER.detail();
+  RENDER.shared();
+}
+function refreshRows() { annotate(); state.saved = null; repaint(); }
+const focusIn = sel => $(`#v-${state.view} ${sel}`)?.focus();
+function saveEdit(form) {
+  const idx = Number(form.dataset.idx), { next, bad } = editedRow(state.upload[idx], form);
+  for (const el of form.elements) el.removeAttribute('aria-invalid');
+  if (bad.length) {
+    bad.forEach(([el]) => el.setAttribute('aria-invalid', 'true'));
+    const err = form.querySelector('.field-err');
+    err.innerHTML = icon('alert') + esc(bad.map(b => b[1]).join(' '));
+    err.hidden = false;
+    return bad[0][0].focus();
+  }
+  applyEdit(idx, next);
+  state.editing = null;
+  refreshRows();
+  focusIn('[data-act=edit]');
+}
 function setFile(role, f) {
   state.files[role] = f; delete state.errors[role]; state.popRole = role;
   clearResult();
@@ -1194,7 +1461,7 @@ const ACTS = {
     try {
       const { wb, result } = await buildUpload(state.files.formula.buf, state.files.template.buf);
       state.wb = wb;
-      setResult(result);
+      setResult(result, uploadRows(wb.getWorksheet('Directo_Upload')));
     } finally { t.innerHTML = label; }
     state.query = ''; $('#q').value = ''; state.limit = 120;
     go('review');
@@ -1203,31 +1470,63 @@ const ACTS = {
   filter(t) { state.filter = t.dataset.filter; state.limit = 120; state.item = null; state.animRows = true; RENDER.review(); },
   'chart-filter'(t) { state.chartFilter = t.dataset.filter; RENDER.review(); },
   more() { state.limit += 300; RENDER.review(); },
-  'open-row'(t) { state.item = Number(t.dataset.idx); if (wide()) RENDER.review(); else go('detail'); },
+  'open-row'(t) { state.item = Number(t.dataset.idx); state.editing = null; if (wide()) RENDER.review(); else go('detail'); },
   step(t) {
     if (t.getAttribute('aria-disabled') === 'true') return;
     const next = state.nav[state.nav.indexOf(state.item) + Number(t.dataset.dir)];
     if (next == null) return;
-    state.item = next;
+    state.item = next; state.editing = null;
     if (wide()) RENDER.review(); else RENDER.detail();
   },
-  mark() {
+  exclude() {
     const i = state.item;
-    state.reviewed.has(i) ? state.reviewed.delete(i) : state.reviewed.add(i);
-    if (wide()) RENDER.review(); else RENDER.detail();
-    RENDER.shared();
+    state.excluded.has(i) ? state.excluded.delete(i) : state.excluded.add(i);
+    refreshRows();
   },
+  keep() {
+    const key = uploadKey(state.upload[state.item]);
+    state.upload.forEach((u, i) => { if (i !== state.item && uploadKey(u) === key) state.excluded.add(i); });
+    state.excluded.delete(state.item);
+    refreshRows();
+  },
+  edit() { state.editing = state.item; repaint(); focusIn('.edit-form [name=C]'); },
+  'cancel-edit'() { state.editing = null; repaint(); focusIn('[data-act=edit]'); },
+  unedit() {
+    const i = state.item, snap = state.edits.get(i);
+    if (!snap) return;
+    Object.assign(state.upload[i], snap.u); Object.assign(state.rows[i], snap.r);
+    state.rows[i].pct = pctOf(state.rows[i]);
+    state.edits.delete(i);
+    refreshRows();
+  },
+  'open-issue'(t) { state.filter = 'REVIEW'; state.item = Number(t.dataset.idx); state.query = ''; $('#q').value = ''; go(wide() ? 'review' : 'detail'); },
   'name-mode'(t) { state.nameMode = t.dataset.mode; RENDER.export(); },
-  async save() {
+  async save(t) {
     if (!state.wb) return go('upload');
+    const skip = t.dataset.skip === '1';
+    if (state.problems.size && !skip && !state.saved) return toast('Còn dòng lỗi. Xử lý ở bước Kiểm tra, hoặc bấm “Bỏ dòng lỗi và tải file”.');
+    const rows = state.upload.filter((u, i) => !state.excluded.has(i) && !state.problems.has(i));
+    if (!rows.length) return toast('Không còn dòng nào hợp lệ để xuất.');
+    const buf = await buildCleanUpload(rows).xlsx.writeBuffer();
+    const issues = await checkUploadFile(buf, rows.length);
+    if (issues.length) throw new Error('File chưa đạt kiểm tra nên chưa tải: ' + issues.join('; '));
     const name = state.saved || outName();
-    try { await offerDownload(await state.wb.xlsx.writeBuffer(), name); }
+    try { await offerDownload(buf, name); }
     catch (e) {
       if (e && e.code === 'declined') return toast('Bạn đã huỷ lưu file.');
       throw e;
     }
-    state.saved = name;
+    if (!state.saved) state.skipped = skip ? state.problems.size : 0;
+    state.saved = name; state.savedRows = rows.length;
     RENDER.export(); RENDER.shared();
+  },
+  async 'save-report'() {
+    if (!state.wb) return go('upload');
+    try { await offerDownload(await state.wb.xlsx.writeBuffer(), `PriceSync_Kiem_tra_${day(today())}.xlsx`); }
+    catch (e) {
+      if (e && e.code === 'declined') return toast('Bạn đã huỷ lưu file.');
+      throw e;
+    }
   },
   reset() {
     Object.assign(state, { files: { formula: null, template: null }, errors: {}, filter: 'all', query: '' });
@@ -1252,6 +1551,12 @@ document.addEventListener('click', e => {
   const fn = ACTS[t.dataset.act];
   if (fn) run(t, fn);
 });
+document.addEventListener('submit', e => {
+  if (!e.target.matches('.edit-form')) return;
+  e.preventDefault();
+  saveEdit(e.target);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && e.target.closest?.('.edit-form')) ACTS['cancel-edit'](); });
 $('#q').addEventListener('input', e => { state.query = e.target.value; state.limit = 120; state.item = null; state.animRows = true; RENDER.review(); });
 $('#file-input').addEventListener('change', e => { if (e.target.files[0]) loadInto(state.pickRole, e.target.files[0]); });
 $('#pair-input').addEventListener('change', e => loadPair(e.target.files));
