@@ -1,0 +1,1241 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Directo Upload</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<style>
+/* Layout: the Kryptonite app layout (phone screens, sidebar shell from 960px, split welcome/file pages) carrying the Directo upload flow */
+:root {
+  --cyan: #82E9FF; --link: #0E8FB0; --ink: #222222; --black: #000000; --gray: #6F7378; --muted: #A5A8AC;
+  --soft: #F6F6F6; --line: #E8E8E8; --line-2: #C9CED4; --white: #FFFFFF; --purple: #9F2EF8; --dot: #FD5151;
+  --up: #1F8F2E; --down: #D63B3B;
+  /* status fills are the same ones the tool paints in Excel */
+  --upd-bg: #C6EFCE; --upd-fg: #1C5A2B; --add-bg: #BDD7EE; --add-fg: #153D63; --warn-bg: #FFFF96; --warn-fg: #5A4700;
+  --font: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --gut: 25px; --tab-h: 72px;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--white); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; text-align: inherit; }
+h1, h2, p { margin: 0; font-weight: inherit; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.i { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.up { color: var(--up); } .down { color: var(--down); } .gray { color: var(--gray); } .muted { color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* shared pieces */
+.logo { display: inline-flex; align-items: center; gap: 3px; height: 33px; color: var(--ink); }
+.logo svg { height: 33px; width: auto; }
+.logo b { font-size: 31px; font-weight: 700; letter-spacing: -0.3px; line-height: 1; }
+.logo i { width: 5px; height: 14px; background: var(--cyan); margin-left: -1px; }
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; height: 50px; width: 100%; border-radius: 8px; font-size: 16px; transition: filter .15s; }
+.btn:hover { filter: brightness(.96); }
+.btn .i { width: 20px; height: 20px; }
+.btn-cyan { background: var(--cyan); color: var(--ink); }
+.btn-dark { background: var(--ink); color: var(--white); }
+.btn-outline { background: var(--white); border: 1px solid var(--line-2); color: #434343; font-size: 15px; }
+.btn[aria-busy="true"] { cursor: progress; filter: saturate(.6); }
+.link { color: var(--link); text-decoration: underline; text-underline-offset: 2px; font-size: 13px; }
+.display { font-size: 34px; font-weight: 500; line-height: 1.25; text-wrap: balance; }
+.headline { font-size: 25px; font-weight: 500; line-height: 1.4; text-wrap: balance; }
+.lead { font-size: 15px; font-weight: 300; line-height: 1.55; color: var(--gray); }
+.dots { display: flex; gap: 10px; justify-content: center; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--ink); }
+.dots i.on { background: var(--ink); }
+.back { width: 34px; height: 34px; border-radius: 50%; background: var(--line); display: grid; place-items: center; }
+.back .i { width: 16px; height: 16px; stroke-width: 2.2; }
+.icon-btn { width: 34px; height: 34px; display: grid; place-items: center; position: relative; color: var(--black); }
+.bell .dot { position: absolute; top: 3px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--dot); }
+.st { width: var(--s, 38px); height: var(--s, 38px); border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
+.st .i { width: 46%; height: 46%; stroke-width: 2.2; }
+.st.UPDATED { background: var(--upd-bg); color: var(--upd-fg); }
+.st.ADDED { background: var(--add-bg); color: var(--add-fg); }
+.st.UNCHANGED { background: var(--soft); color: var(--gray); }
+.st.ISSUE { background: var(--warn-bg); color: var(--warn-fg); }
+.st.FILE { background: var(--cyan); color: var(--ink); }
+.notice { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
+.notice .i { width: 18px; height: 18px; margin-top: 1px; }
+.notice.warn { background: #FFFBDB; border: 1px solid #E2C93F; color: var(--warn-fg); }
+.notice.err { background: #FDECEC; border: 1px solid #F0A9A9; color: #8A1C1C; }
+.notice.ok { background: #EEF8F0; border: 1px solid #A9D8B3; color: var(--upd-fg); }
+.notice .row-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.notice .row-btns button { height: 32px; padding: 0 12px; border-radius: 6px; background: var(--white); border: 1px solid currentColor; font-size: 13px; }
+.spin { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(0, 0, 0, .15); border-top-color: currentColor; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast { position: fixed; z-index: 60; left: 50%; top: max(16px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(560px, calc(100% - 32px)); }
+.demo { font-size: 12px; color: var(--gray); background: var(--soft); border-radius: 999px; padding: 4px 12px; align-self: flex-start; }
+
+/* welcome / files / done */
+.auth { min-height: 100%; display: grid; grid-template-areas: "top" "visual" "body"; grid-template-rows: auto auto 1fr; padding-block: 20px max(28px, env(safe-area-inset-bottom, 0px)); }
+.auth-top, .auth-body { padding-left: max(var(--gut), env(safe-area-inset-left, 0px)); padding-right: max(var(--gut), env(safe-area-inset-right, 0px)); }
+.auth-top { grid-area: top; display: flex; align-items: center; min-height: 34px; }
+.auth-visual { grid-area: visual; min-width: 0; }
+.auth-body { grid-area: body; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.auth-actions { margin-top: auto; padding-top: 32px; display: flex; flex-direction: column; gap: 14px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.desk-only { display: none; }
+#v-welcome .auth-top, #v-done .auth-top { padding-top: 24px; }
+#v-welcome .auth-visual, #v-done .auth-visual { padding: 24px 0 12px; display: flex; justify-content: center; }
+#v-welcome .lead { margin-top: 6px; max-width: 330px; }
+#v-welcome .dots { margin-top: 32px; }
+#v-done .lead { margin-top: 8px; font-size: 14px; line-height: 1.75; }
+#v-done .lead b { font-weight: 600; color: var(--ink); }
+#v-done .lead b.down { color: var(--down); }
+.illo { width: min(320px, 82%); height: auto; }
+
+.cards-hero { position: relative; width: 520px; height: 440px; flex: none; }
+.sheet-card { position: absolute; width: 340px; height: 214px; border-radius: 22px; background: linear-gradient(150deg, #3b3b3b 0%, #1c1c1c 45%, #0c0c0c 100%); box-shadow: -4px 5px 0 0 var(--cyan), -30px 50px 40px -10px rgba(0, 0, 0, .22); transform: rotateX(60deg) rotateZ(-28deg); color: #fff; }
+.sheet-card b { position: absolute; left: 36px; top: 30px; font-size: 20px; font-weight: 600; letter-spacing: 3px; }
+.sheet-card span { position: absolute; left: 36px; bottom: 40px; font-size: 22px; letter-spacing: 4px; word-spacing: 14px; }
+.sheet-card .i { position: absolute; top: 28px; right: 30px; width: 28px; height: 28px; stroke-width: 1.8; }
+.sheet-card.c1 { left: 190px; top: 70px; }
+.sheet-card.c2 { left: -20px; top: 190px; }
+
+.form { display: flex; flex-direction: column; margin-top: 8px; }
+.field-label { font-size: 14px; margin: 22px 0 6px; display: flex; justify-content: space-between; gap: 8px; }
+.field-label span { color: var(--muted); font-size: 12px; }
+.filebox { display: flex; align-items: center; gap: 12px; min-height: 58px; width: 100%; padding: 8px 10px 8px 12px; border: 1px solid var(--ink); border-radius: 8px; background: var(--white); text-align: left; }
+.filebox.none { border-style: dashed; border-color: var(--line-2); }
+.filebox.bad { border-color: var(--down); }
+.filebox .st { --s: 36px; }
+.filebox .fb-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.filebox .fb-text b { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.filebox .fb-text span { font-size: 12px; color: var(--gray); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.filebox .fb-act { font-size: 13px; color: var(--link); text-decoration: underline; white-space: nowrap; }
+.field-msg { margin-top: 8px; }
+.field-err { color: var(--down); font-size: 13px; margin-top: 6px; display: flex; gap: 6px; align-items: center; }
+.field-err .i { width: 16px; height: 16px; }
+.form-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 22px 0 32px; font-size: 13px; color: var(--gray); }
+.form .btn-outline { margin-top: 14px; }
+.foot { text-align: center; font-size: 13px; margin-top: 20px; }
+#v-files .logo { margin-top: 40px; margin-bottom: 10px; }
+
+/* app shell */
+.shell { min-height: 100%; }
+.side { display: flex; flex-direction: column; gap: 26px; background: var(--white); }
+.side-logo .logo { transform: scale(.82); transform-origin: left center; }
+.side-nav { display: flex; flex-direction: column; gap: 4px; }
+.nav-item { display: flex; align-items: center; gap: 14px; height: 48px; padding: 0 14px; border-radius: 12px; color: var(--gray); font-size: 15px; }
+.nav-item:hover { background: var(--soft); }
+.nav-item[aria-current="page"] { color: var(--black); background: var(--soft); font-weight: 500; }
+.nav-item .count { margin-left: auto; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--dot); color: var(--white); font-size: 12px; display: grid; place-items: center; }
+.side-files { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--ink); border-radius: 18px; text-align: left; }
+.side-files .sf-label { font-size: 12px; color: var(--muted); }
+.side-files > span { min-width: 0; }
+.side-files b { font-size: 13px; font-weight: 500; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.view.pad { padding-left: max(var(--gut), env(safe-area-inset-left, 0px)); padding-right: max(var(--gut), env(safe-area-inset-right, 0px)); padding-bottom: 32px; }
+body[data-tab] .view.pad { padding-bottom: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px) + 28px); }
+.topbar { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; padding: 18px 0 22px; }
+.top-title { text-align: center; font-size: 18px; font-weight: 500; color: var(--black); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col { display: flex; flex-direction: column; min-width: 0; }
+
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: none; grid-template-columns: repeat(4, 1fr); height: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--white); border-top: 1px solid var(--line); }
+body[data-tab] .tabbar { display: grid; }
+.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.tab[aria-current="page"] { color: var(--black); }
+.tab .i { width: 26px; height: 26px; stroke-width: 1.4; }
+.tab[aria-current="page"] .i { stroke-width: 1.9; }
+
+/* home */
+.who { display: flex; align-items: center; gap: 13px; text-align: left; width: 100%; }
+.who .st { --s: 50px; }
+.who > span:last-child { min-width: 0; }
+.who-name { display: block; font-size: 16px; font-weight: 500; color: var(--black); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who-sub { display: block; font-size: 13px; color: var(--gray); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.balance { margin-top: 20px; }
+.bal-label { font-size: 16px; font-weight: 500; }
+.bal-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bal-amount { font-size: 48px; font-weight: 300; line-height: 1.35; letter-spacing: -0.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bal-delta { display: flex; flex-direction: column; align-items: flex-end; font-size: 15px; white-space: nowrap; }
+.trade-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-top: 14px; }
+.tcard { height: 101px; border-radius: 18px; border: 1px solid var(--ink); display: flex; flex-direction: column; justify-content: space-between; padding: 14px 16px 16px; font-size: 15px; transition: transform .15s; }
+.tcard:hover { transform: translateY(-2px); }
+.tcard .i { width: 20px; height: 20px; }
+.tcard small { font-size: 12px; opacity: .75; }
+.tcard.dark { background: var(--ink); color: var(--white); }
+.tcard.dark .i { color: var(--cyan); }
+.tcard.cyan { background: var(--cyan); color: var(--ink); }
+.panel { border: 1px solid var(--ink); border-radius: 18px; min-width: 0; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 13px 14px; border-bottom: 1px solid var(--ink); }
+.panel-head h2 { font-size: 17px; font-weight: 500; }
+.panel-head .badge { font-size: 12px; padding: 2px 10px; border-radius: 999px; background: var(--warn-bg); color: var(--warn-fg); font-weight: 500; }
+.pager { display: flex; gap: 7px; }
+.pager i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--ink); }
+.pager i.on { background: var(--ink); }
+#v-home .panel { margin-top: 22px; }
+.rowlist { padding: 8px 0 12px; }
+.row { display: flex; align-items: center; gap: 5px; width: 100%; height: 58px; margin-top: 5px; padding: 0 13px 0 11px; border-radius: 12px; }
+.row:hover { background: var(--soft); }
+.r-name { flex: 1; min-width: 0; display: flex; flex-direction: column; margin-left: 6px; }
+.r-name b { font-size: 16px; font-weight: 500; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r-name span, .r-val span:first-child { font-size: 13px; font-weight: 300; color: var(--gray); line-height: 1.35; white-space: nowrap; }
+.r-val { display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; }
+.r-val span:first-child { font-size: 14px; }
+.r-val span:last-child { font-size: 13px; line-height: 1.35; }
+.r-val .new { color: var(--add-fg); }
+.reviewed .r-name b::after { content: " ✓"; color: var(--up); font-weight: 400; }
+.empty { padding: 26px 16px; color: var(--gray); font-size: 14px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.empty .btn { width: auto; height: 40px; padding: 0 18px; font-size: 14px; border-radius: 20px; }
+.panel-foot { display: flex; justify-content: center; padding: 6px 0 20px; }
+.btn.sm { width: auto; min-width: 145px; padding: 0 20px; height: 40px; font-size: 14px; border-radius: 20px; }
+
+/* changes / chart */
+.search { display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 14px; border-radius: 10px; background: var(--soft); }
+.search:focus-within { outline: 2px solid var(--link); }
+.search input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-size: 15px; }
+.search input::placeholder { color: var(--muted); }
+.search .i { width: 22px; height: 22px; }
+#v-changes .bal-label { margin-top: 16px; font-size: 15px; }
+.week { font-size: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+.chart { margin-top: 18px; }
+.plot { position: relative; height: 182px; }
+.plot .gl { position: absolute; left: 0; right: 0; border-top: 1px dashed #D5D5D5; }
+.plot .vl { position: absolute; top: 0; bottom: 0; right: 4.5%; border-left: 1px dashed #D5D5D5; }
+.plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.plot polyline { fill: none; stroke: var(--purple); stroke-width: 2.2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.plot .mk { position: absolute; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; border-radius: 50%; border: 2px solid var(--purple); background: var(--white); }
+.plot .lab { position: absolute; font-size: 12px; color: var(--gray); background: rgba(255, 255, 255, .85); padding: 0 3px; }
+.plot .lab.top { top: 3px; right: 6%; }
+.plot .lab.bot { bottom: 3px; left: 14px; }
+.plot .lab.zero { left: 2px; transform: translateY(-120%); }
+.plot-empty { height: 182px; display: grid; place-items: center; text-align: center; color: var(--gray); font-size: 14px; border: 1px dashed var(--line-2); border-radius: 12px; padding: 16px; }
+.ranges { display: flex; justify-content: space-around; padding: 0 13px; margin-top: 14px; }
+.ranges button { min-width: 56px; height: 26px; padding: 0 10px; border-radius: 6px; font-size: 13px; color: var(--muted); text-align: center; }
+.ranges button[aria-pressed="true"] { background: var(--soft); color: var(--black); font-weight: 500; }
+.axis-note { margin-top: 10px; font-size: 12px; color: var(--muted); text-align: center; }
+#v-changes .panel { margin-top: 22px; }
+
+/* rows list */
+.tabs { display: flex; gap: 4px; margin: 22px 0 20px; overflow-x: auto; scrollbar-width: none; }
+.tabs button { flex-shrink: 0; padding: 0 10px 8px; font-size: 15px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tabs button sup { font-size: 11px; margin-left: 2px; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+#rows-list { padding: 12px 0; }
+#rows-list .row:first-child { margin-top: 0; }
+.more { display: flex; justify-content: center; padding: 4px 0 16px; }
+
+/* detail */
+.r-head { display: flex; align-items: center; gap: 14px; padding: 6px 0 22px; }
+.r-head .st { --s: 44px; }
+.r-head .h-name { flex: 1; min-width: 0; }
+.r-head .h-name b { display: block; font-size: 17px; font-weight: 500; }
+.r-head .h-name span { font-size: 14px; color: var(--gray); font-weight: 300; }
+.r-head .h-val { text-align: right; }
+.r-head .h-val b { display: block; font-size: 26px; font-weight: 300; font-variant-numeric: tabular-nums; }
+.r-head .h-val span { font-size: 14px; }
+.bs-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 10px; }
+.pill { height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; border: 1px solid var(--ink); }
+.pill .i { width: 18px; height: 18px; }
+.pill.dark { background: var(--ink); color: var(--white); }
+.pill.dark .i { color: var(--cyan); }
+.pill.cyan { background: var(--cyan); }
+.mark { height: 38px; border: 1px solid #CFD4D9; border-radius: 6px; display: grid; place-items: center; color: var(--black); }
+.mark .i { width: 20px; height: 20px; }
+.mark[aria-pressed="true"] { background: var(--upd-bg); border-color: var(--upd-bg); color: var(--upd-fg); }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 24px; }
+.stat { background: var(--soft); border-radius: 10px; padding: 20px 17px 22px; min-width: 0; }
+.stat p { font-size: 13px; color: var(--gray); }
+.stat b { display: block; margin-top: 10px; font-size: 17px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.detail-notes { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.detail-next { margin-top: 22px; }
+
+/* export */
+#v-export { background: var(--cyan); min-height: 100%; }
+.buy-panel { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; padding-bottom: max(28px, env(safe-area-inset-bottom, 0px)); }
+.buy-panel .back { background: var(--white); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 5px 6px; background: var(--white); border-radius: 8px; margin-top: 18px; }
+.seg button { height: 40px; border-radius: 7px; font-size: 14px; text-align: center; }
+.seg button[aria-selected="true"] { background: var(--ink); color: var(--white); }
+.buy-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 26px 0 30px; flex-wrap: wrap; }
+.file-pill { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px 0 8px; border-radius: 19px; background: var(--white); font-size: 15px; max-width: 100%; }
+.file-pill .st { --s: 24px; }
+.rate { font-size: 16px; }
+.amount { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 66px; padding: 0 14px 0 20px; border-radius: 8px; font-size: 15px; }
+.amount.card { background: var(--white); }
+.amount + .amount { margin-top: 8px; }
+.amt { display: flex; align-items: baseline; gap: 6px; }
+.amt b { font-size: 30px; font-weight: 300; font-variant-numeric: tabular-nums; }
+.amt small { font-size: 12px; }
+.amt.alert b { color: var(--down); font-weight: 400; }
+.save-note { margin-top: 22px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.buy-spacer { flex: 1; min-height: 40px; }
+
+/* rules */
+.me-card { display: flex; align-items: center; gap: 14px; padding: 16px 14px; border-radius: 18px; background: var(--ink); color: var(--white); }
+.me-card .st { --s: 46px; }
+.me-name { font-size: 16px; font-weight: 600; }
+.me-mail { font-size: 13px; color: var(--muted); }
+.settings { margin-top: 22px; padding: 10px 0; }
+.set-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 8px 16px; font-size: 15px; color: var(--ink); text-align: left; }
+.set-row > span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.set-row small { font-size: 13px; color: var(--gray); }
+.set-row .i { width: 18px; height: 18px; stroke-width: 2; }
+button.set-row:hover { background: var(--soft); }
+.swatches { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 4px; font-size: 13px; color: var(--gray); }
+.swatches i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1px solid rgba(0, 0, 0, .1); }
+.signout { margin-top: 28px; }
+
+@media (max-width: 959px) {
+  .side { position: fixed; inset: 0 auto 0 0; z-index: 40; width: min(300px, 84vw); padding: max(24px, env(safe-area-inset-top, 0px)) 18px max(24px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px)); transform: translateX(-102%); transition: transform .25s ease; box-shadow: 0 0 40px rgba(0, 0, 0, .18); }
+  body.menu-open .side { transform: none; }
+  .scrim { position: fixed; inset: 0; z-index: 35; background: rgba(0, 0, 0, .35); }
+  .buy-panel { padding-left: max(var(--gut), env(safe-area-inset-left, 0px)); padding-right: max(var(--gut), env(safe-area-inset-right, 0px)); }
+}
+@media (max-width: 380px) {
+  .bal-amount { font-size: 40px; }
+  .display { font-size: 30px; }
+}
+@media (min-width: 960px) {
+  .shell { display: grid; grid-template-columns: 260px minmax(0, 1fr); }
+  .side { position: sticky; top: 0; height: 100vh; padding: 30px 20px 26px; border-right: 1px solid var(--line); }
+  .menu-btn, .tabbar, .scrim { display: none !important; }
+  body[data-tab] .view.pad, .view.pad { padding: 8px 48px 56px; max-width: 1200px; }
+  .topbar { display: flex; gap: 16px; padding: 22px 0 28px; }
+  .top-title { text-align: left; font-size: 26px; flex: 1; }
+  .home-grid, .changes-grid, .detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+  #v-home .panel, #v-changes .panel { margin-top: 0; }
+  #v-changes .search { margin-bottom: 8px; }
+  .tcard { height: 128px; }
+  #rows-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; padding: 12px; }
+  #rows-list .row:nth-child(2) { margin-top: 0; }
+  #rows-list .more, #rows-list .empty { grid-column: 1 / -1; }
+  .rules-wrap { max-width: 680px; }
+  .signout { max-width: 240px; }
+  .detail-grid .stats { margin-top: 0; }
+  #v-export { background: var(--white); }
+  .buy-panel { min-height: 0; max-width: 520px; margin: 32px auto 0; padding: 4px 28px 28px; border-radius: 24px; background: var(--cyan); }
+  .buy-spacer { min-height: 60px; flex: none; }
+
+  .auth { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-rows: 1fr auto auto 1fr; grid-template-areas: "visual ." "visual top" "visual body" "visual ."; min-height: 100vh; padding: 0; column-gap: 64px; }
+  .auth-visual { position: sticky; top: 0; height: 100vh; background: var(--soft); display: flex !important; align-items: center; justify-content: center; padding: 40px !important; margin: 0 !important; overflow: hidden; }
+  .auth-top, .auth-body { width: min(440px, 100%); padding: 0; }
+  .auth-top { padding-top: 0 !important; }
+  .auth-body { padding-bottom: 40px; }
+  .auth-actions { margin-top: 0; padding-top: 36px; }
+  .desk-only { display: flex; }
+  .illo { width: min(440px, 80%); }
+  #v-files .logo { margin-top: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation-duration: 3s !important; }
+}
+</style>
+
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6 3 8.5 3 8.5H3S6 15 6 9"/><path d="M10.2 21a2 2 0 0 0 3.6 0"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4.5-4.5"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9.5 21v-6.5h5V21"/></symbol>
+  <symbol id="i-changes" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6.5"/><path d="M16 7.5h4V11"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></symbol>
+  <symbol id="i-rules" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7M9 12h5"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8M8 17h5"/></symbol>
+  <symbol id="i-sheet" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></symbol>
+  <symbol id="i-pick" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M12 11v6M9 14h6"/></symbol>
+  <symbol id="i-export" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-UPDATED" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="i-ADDED" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+  <symbol id="i-UNCHANGED" viewBox="0 0 24 24"><path d="M6 9h12M6 15h12"/></symbol>
+  <symbol id="i-ISSUE" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+  <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-open" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  <symbol id="i-d" viewBox="0 0 24 33"><rect x="0" y="0" width="6.5" height="33" fill="#222222" stroke="none"/><path d="M9.5 0H12a16.5 16.5 0 0 1 0 33H9.5v-7H12a9.5 9.5 0 0 0 0-19H9.5z" fill="#82E9FF" stroke="none"/></symbol>
+</svg>
+
+<!-- welcome -->
+<section class="auth" id="v-welcome" hidden>
+  <div class="auth-top"><span class="logo" role="img" aria-label="Directo"><svg viewBox="0 0 24 33" aria-hidden="true"><use href="#i-d"/></svg><b>IRECTO</b><i></i></span></div>
+  <div class="auth-visual">
+    <svg class="illo" viewBox="0 0 320 300" role="img" aria-label="Laptop showing a price sheet with highlighted rows next to a plant">
+      <ellipse cx="166" cy="284" rx="140" ry="10" fill="#E8E8E8"/>
+      <g stroke="#222222" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M72 252C44 214 40 172 60 138c12 36 20 74 14 114z" fill="#D9D9D9"/>
+        <path d="M77 252c6-50 26-82 56-94-8 42-28 74-52 94z" fill="#EFEFEF"/>
+        <path d="M70 252c-10-30-38-46-58-44 14 26 36 42 58 44z" fill="#E2E2E2"/>
+        <path d="M60 138c8 40 13 78 13 114M133 158c-22 30-40 62-54 94M12 208c22 14 40 28 58 44" fill="none"/>
+        <path d="M46 250h58l-8 36H54z" fill="#82E9FF"/>
+        <rect x="128" y="200" width="178" height="10" rx="3" fill="#FFFFFF"/>
+        <path d="M146 210v76M288 210v76M146 252h142" fill="none"/>
+        <path d="M150 184h152l-10 16H160z" fill="#E8E8E8"/>
+        <rect x="164" y="94" width="124" height="90" rx="7" fill="#FFFFFF"/>
+        <rect x="173" y="103" width="106" height="72" rx="3" fill="#FFFFFF"/>
+        <path d="M173 117h106M173 131h106M173 145h106M173 159h106M203 103v72M243 103v72" fill="none" stroke-width="1"/>
+        <rect x="173.5" y="117.5" width="105" height="13" fill="#C6EFCE" stroke="none"/>
+        <rect x="173.5" y="145.5" width="105" height="13" fill="#BDD7EE" stroke="none"/>
+        <rect x="173.5" y="159.5" width="29" height="15" fill="#FFFF96" stroke="none"/>
+        <rect x="173" y="103" width="106" height="72" rx="3" fill="none"/>
+        <circle cx="244" cy="56" r="22" fill="#82E9FF"/>
+        <path d="M244 67V45m-8 8 8-8 8 8" fill="none" stroke-width="2.4"/>
+        <circle cx="194" cy="44" r="11" fill="#FFFFFF"/>
+        <path d="M189 44l4 4 7-8" fill="none"/>
+        <circle cx="290" cy="80" r="7" fill="#FFFFFF"/>
+      </g>
+    </svg>
+  </div>
+  <div class="auth-body">
+    <h1 class="display">Giá mới lên Directo trong 3 bước</h1>
+    <p class="lead">Chọn file formula và file template, xem trước các thay đổi, rồi tạo file upload. File gốc chỉ được đọc, không bị sửa.</p>
+    <div class="dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+    <div class="auth-actions"><button class="btn btn-cyan" data-act="start">Bắt đầu</button></div>
+  </div>
+</section>
+
+<!-- choose files (sign-in layout) -->
+<section class="auth" id="v-files" hidden>
+  <div class="auth-top"><button class="back" data-go="home" aria-label="Về tổng quan"><svg class="i"><use href="#i-back"/></svg></button></div>
+  <div class="auth-visual desk-only">
+    <div class="cards-hero" aria-hidden="true">
+      <div class="sheet-card c1"><b>TEMPLATE</b><svg class="i"><use href="#i-sheet"/></svg><span>26 · B C D E</span></div>
+      <div class="sheet-card c2"><b>FORMULA</b><svg class="i"><use href="#i-sheet"/></svg><span>B C H I</span></div>
+    </div>
+  </div>
+  <div class="auth-body">
+    <span class="logo" role="img" aria-label="Directo"><svg viewBox="0 0 24 33" aria-hidden="true"><use href="#i-d"/></svg><b>IRECTO</b><i></i></span>
+    <h1 class="headline">Chọn 2 file Excel</h1>
+    <p class="lead">File formula chứa giá hiện tại, file template chứa giá mới. Nếu file đang mở trong Excel, hãy lưu lại trước khi chọn.</p>
+    <div class="form">
+      <input type="file" id="file-input" accept=".xlsx" hidden>
+      <input type="file" id="pair-input" accept=".xlsx" multiple hidden>
+      <div id="field-formula"></div>
+      <div id="field-template"></div>
+      <div class="form-row"><span>Kéo thả file vào ô cũng được</span><button type="button" class="link" data-act="swap">Đổi chỗ 2 file</button></div>
+      <button class="btn btn-cyan" data-act="preview" id="preview-btn">Xem trước</button>
+      <button class="btn btn-outline" data-act="pick-pair"><svg class="i"><use href="#i-pick"/></svg>Chọn cả 2 file cùng lúc</button>
+      <p class="foot"><span class="gray">Không chắc file đúng mẫu?</span>&nbsp; <button type="button" class="link" data-go="rules">Xem quy tắc đọc file</button></p>
+    </div>
+  </div>
+</section>
+
+<!-- done (exchange complete layout) -->
+<section class="auth" id="v-done" hidden>
+  <div class="auth-top"><span class="logo" role="img" aria-label="Directo"><svg viewBox="0 0 24 33" aria-hidden="true"><use href="#i-d"/></svg><b>IRECTO</b><i></i></span></div>
+  <div class="auth-visual">
+    <svg class="illo" viewBox="0 0 320 260" role="img" aria-label="Laptop showing a check mark next to a plant">
+      <g stroke="#222222" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M232 128c-18-34-16-80 4-108 12 34 14 72 2 108z" fill="#D9D9D9"/>
+        <path d="M238 128c4-34 22-60 50-70-6 32-24 56-46 70z" fill="#EFEFEF"/>
+        <path d="M228 128c-10-22-30-34-48-34 10 22 28 34 48 34z" fill="#E2E2E2"/>
+        <path d="M236 20c4 36 4 72 0 108M288 58c-20 22-36 46-48 70M180 94c18 10 34 22 48 34" fill="none"/>
+        <path d="M212 126h52l-6 40h-40z" fill="#82E9FF"/>
+        <path d="M30 70h196l22 124H52z" fill="#F3EFE9"/>
+        <path d="M42 80h176l19 106H61z" fill="#FFFFFF"/>
+        <rect x="40" y="194" width="250" height="13" rx="5" fill="#E8E8E8"/>
+        <circle cx="140" cy="133" r="36" fill="#82E9FF"/>
+        <path d="M123 133l12 12 24-26" fill="none" stroke-width="6"/>
+      </g>
+    </svg>
+  </div>
+  <div class="auth-body">
+    <h1 class="display">Đã tạo file upload!</h1>
+    <p class="lead" id="done-text"></p>
+    <div class="auth-actions">
+      <button class="btn btn-cyan" data-act="save"><svg class="i"><use href="#i-export"/></svg>Tải lại file</button>
+      <div class="pair">
+        <button class="btn btn-outline" data-act="reset"><svg class="i"><use href="#i-reset"/></svg>Làm lượt mới</button>
+        <button class="btn btn-outline" data-go="home">Về tổng quan</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- app shell -->
+<div class="shell" id="shell" hidden>
+  <aside class="side" id="side" aria-label="Menu chính">
+    <div class="side-logo"><span class="logo" role="img" aria-label="Directo"><svg viewBox="0 0 24 33" aria-hidden="true"><use href="#i-d"/></svg><b>IRECTO</b><i></i></span></div>
+    <nav class="side-nav">
+      <button class="nav-item" data-go="home" data-nav="home"><svg class="i"><use href="#i-home"/></svg>Tổng quan</button>
+      <button class="nav-item" data-go="changes" data-nav="changes"><svg class="i"><use href="#i-changes"/></svg>Thay đổi giá</button>
+      <button class="nav-item" data-go="rows" data-nav="rows"><svg class="i"><use href="#i-list"/></svg>Danh sách<span class="count" id="nav-issues" hidden></span></button>
+      <button class="nav-item" data-go="rules" data-nav="rules"><svg class="i"><use href="#i-rules"/></svg>Quy tắc</button>
+    </nav>
+    <button class="side-files" data-go="files" id="side-files"></button>
+    <button class="nav-item" data-act="reset"><svg class="i"><use href="#i-reset"/></svg>Làm lượt mới</button>
+  </aside>
+  <div class="scrim" id="scrim" data-act="menu-close" hidden></div>
+
+  <main>
+    <section class="view pad" id="v-home" hidden>
+      <header class="topbar">
+        <button class="icon-btn menu-btn" data-act="menu" aria-label="Mở menu"><svg class="i"><use href="#i-menu"/></svg></button>
+        <h1 class="top-title">Tổng quan</h1>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+      </header>
+      <div class="home-grid">
+        <div class="col">
+          <button class="who" data-go="files" id="who"></button>
+          <div class="balance">
+            <p class="bal-label">Dòng cần upload</p>
+            <div class="bal-row"><p class="bal-amount" id="home-total">—</p><p class="bal-delta" id="home-delta"></p></div>
+          </div>
+          <div class="trade-cards">
+            <button class="tcard dark" data-go="files"><svg class="i"><use href="#i-pick"/></svg><span>Chọn file<br><small id="pick-sub">Formula + template</small></span></button>
+            <button class="tcard cyan" data-act="to-export"><svg class="i"><use href="#i-export"/></svg><span>Tạo file upload<br><small id="export-sub">Sau khi xem trước</small></span></button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Cần xem lại</h2><span class="badge" id="home-badge" hidden></span><span class="pager" aria-hidden="true" id="home-pager"><i class="on"></i><i></i><i></i></span></div>
+          <div class="rowlist" id="home-issues"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view pad" id="v-changes" hidden>
+      <header class="topbar">
+        <button class="icon-btn menu-btn" data-act="menu" aria-label="Mở menu"><svg class="i"><use href="#i-menu"/></svg></button>
+        <h1 class="top-title">Thay đổi giá</h1>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+      </header>
+      <label class="search"><svg class="i"><use href="#i-search"/></svg><span class="sr-only">Tìm mã đổi giá</span><input id="changes-q" type="search" placeholder="Tìm mã" autocomplete="off"></label>
+      <div class="changes-grid">
+        <div class="col">
+          <p class="bal-label">Dòng đổi giá</p>
+          <p class="bal-amount" id="changes-total">—</p>
+          <p class="week" id="changes-split"></p>
+          <div class="chart" id="changes-chart"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Đổi giá nhiều nhất</h2></div>
+          <div class="rowlist" id="changes-top"></div>
+          <div class="panel-foot" id="changes-foot"><button class="btn btn-dark sm" data-act="list" data-filter="UPDATED">Xem tất cả</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view pad" id="v-rows" hidden>
+      <header class="topbar">
+        <button class="icon-btn menu-btn" data-act="menu" aria-label="Mở menu"><svg class="i"><use href="#i-menu"/></svg></button>
+        <h1 class="top-title">Danh sách</h1>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+      </header>
+      <label class="search"><svg class="i"><use href="#i-search"/></svg><span class="sr-only">Tìm mã sản phẩm</span><input id="rows-q" type="search" placeholder="Tìm mã sản phẩm" autocomplete="off"></label>
+      <div class="tabs" role="tablist" aria-label="Lọc theo trạng thái" id="rows-tabs"></div>
+      <div class="panel"><div class="rowlist" id="rows-list"></div></div>
+    </section>
+
+    <section class="view pad" id="v-detail" hidden>
+      <header class="topbar">
+        <button class="back" data-act="back" aria-label="Quay lại"><svg class="i"><use href="#i-back"/></svg></button>
+        <h1 class="top-title" id="detail-title"></h1>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+      </header>
+      <div class="detail-grid">
+        <div class="col">
+          <div class="r-head" id="detail-head"></div>
+          <div class="bs-row">
+            <button class="pill dark" data-act="step" data-dir="-1"><svg class="i"><use href="#i-prev"/></svg>Dòng trước</button>
+            <button class="pill cyan" data-act="step" data-dir="1">Dòng sau<svg class="i"><use href="#i-next"/></svg></button>
+            <button class="mark" id="mark" data-act="mark" aria-pressed="false" aria-label="Đánh dấu đã xem"><svg class="i"><use href="#i-check"/></svg></button>
+          </div>
+          <div class="chart" id="detail-chart"></div>
+        </div>
+        <div class="col">
+          <div class="stats" id="detail-stats"></div>
+          <div class="detail-notes" id="detail-notes"></div>
+          <button class="btn btn-cyan detail-next" data-act="next-issue" id="detail-next"></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="v-export" hidden>
+      <div class="buy-panel">
+        <header class="topbar">
+          <button class="back" data-act="back" aria-label="Quay lại"><svg class="i"><use href="#i-back"/></svg></button>
+          <h1 class="top-title">Tạo file upload</h1>
+          <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+        </header>
+        <div class="seg" role="tablist" aria-label="Tên file">
+          <button role="tab" data-act="save-mode" data-mode="plain" aria-selected="true">Tên gốc</button>
+          <button role="tab" data-act="save-mode" data-mode="dated" aria-selected="false">Thêm ngày vào tên</button>
+        </div>
+        <div class="buy-row">
+          <span class="file-pill"><span class="st FILE"><svg class="i"><use href="#i-sheet"/></svg></span><span id="export-name">Directo_Upload.xlsx</span></span>
+          <p class="rate" id="export-rows"></p>
+        </div>
+        <div class="amount card"><span>Cập nhật giá</span><span class="amt"><b id="export-upd">0</b><small>dòng</small></span></div>
+        <div class="amount"><span>Thêm mới</span><span class="amt"><b id="export-add">0</b><small>dòng</small></span></div>
+        <div class="amount"><span>Cần xem lại</span><span class="amt" id="export-issue-wrap"><b id="export-issue">0</b><small>dòng</small></span></div>
+        <p class="save-note" id="save-note"></p>
+        <div class="buy-spacer"></div>
+        <button class="btn btn-dark" data-act="save" id="save-btn"><svg class="i"><use href="#i-export"/></svg>Tạo file upload</button>
+      </div>
+    </section>
+
+    <section class="view pad" id="v-rules" hidden>
+      <header class="topbar">
+        <button class="icon-btn menu-btn" data-act="menu" aria-label="Mở menu"><svg class="i"><use href="#i-menu"/></svg></button>
+        <h1 class="top-title">Quy tắc</h1>
+        <button class="icon-btn bell" data-act="issues" aria-label="Dòng cần xem lại"><svg class="i"><use href="#i-bell"/></svg><span class="dot" hidden></span></button>
+      </header>
+      <div class="rules-wrap">
+        <div class="me-card"><span class="st FILE"><svg class="i"><use href="#i-sheet"/></svg></span><div><p class="me-name">Directo upload</p><p class="me-mail">Đọc 2 file Excel ngay trong trình duyệt và tạo Directo_Upload.xlsx. File gốc không bị sửa.</p></div></div>
+        <div class="panel settings">
+          <div class="set-row"><span>File formula<small>Sheet đầu tiên. Cột B mã, C giá, H–I ngày bắt đầu và kết thúc.</small></span></div>
+          <div class="set-row"><span>File template<small>Sheet đang chọn khi lưu. Đọc từ dòng 26, cột B–E.</small></span></div>
+          <div class="set-row"><span>Ghép dòng<small>Cùng mã và cùng kỳ khuyến mãi thì cập nhật giá, khác kỳ thì thêm dòng mới.</small></span></div>
+          <div class="set-row"><span>Giá và ngày<small>Giá làm tròn 2 số lẻ (11,285 → 11,29). Ngày đưa về dd.mm.yyyy.</small></span></div>
+          <div class="set-row"><span>Màu trong file Excel<span class="swatches"><span><i style="background: var(--upd-bg)"></i>Cập nhật</span><span><i style="background: var(--add-bg)"></i>Thêm mới</span><span><i style="background: var(--warn-bg)"></i>Mã lặp</span></span></span></div>
+          <button class="set-row" data-act="welcome"><span>Xem lại màn hình giới thiệu</span><svg class="i" aria-hidden="true"><use href="#i-chev-r"/></svg></button>
+        </div>
+        <button class="btn btn-dark signout" data-act="reset"><svg class="i"><use href="#i-reset"/></svg>Làm lượt mới</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Các mục chính">
+    <button class="tab" data-go="home" data-nav="home"><svg class="i"><use href="#i-home"/></svg>Tổng quan</button>
+    <button class="tab" data-go="changes" data-nav="changes"><svg class="i"><use href="#i-changes"/></svg>Thay đổi</button>
+    <button class="tab" data-go="rows" data-nav="rows"><svg class="i"><use href="#i-list"/></svg>Danh sách</button>
+    <button class="tab" data-go="rules" data-nav="rules"><svg class="i"><use href="#i-rules"/></svg>Quy tắc</button>
+  </nav>
+</div>
+
+<div class="toast" id="toast" role="alert" hidden></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const icon = name => `<svg class="i" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+const num = new Intl.NumberFormat('vi-VN');
+const money2 = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const pct1 = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const price = v => typeof v === 'number' ? money2.format(v) : (v == null || v === '' ? '—' : esc(v));
+const signed = p => (p > 0 ? '+' : p < 0 ? '−' : '') + pct1.format(Math.abs(p)) + '%';
+const isDay = v => /^\d{4}-\d{2}-\d{2}$/.test(v || '');
+const day = v => isDay(v) ? v.split('-').reverse().join('.') : (v ? esc(v) : '—');
+function period(r) {
+  if (isDay(r.start) && isDay(r.end) && r.start.slice(0, 4) === r.end.slice(0, 4)) return `${day(r.start).slice(0, 5)} – ${day(r.end)}`;
+  return `${day(r.start)} – ${day(r.end)}`;
+}
+/* ENGINE START: build_upload() from Price_Script.py, ported to ExcelJS. Keep the two in step. */
+const solid = hex => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + hex }, bgColor: { argb: 'FF' + hex } });
+const YELLOW_FILL = solid('FFFF96'), UPDATED_FILL = solid('C6EFCE'), ADDED_FILL = solid('BDD7EE'), HEADER_FILL = solid('1F4E78');
+const WHITE_BOLD = { bold: true, color: { argb: 'FFFFFFFF' } };
+const DATE_FORMAT = 'dd.mm.yyyy';
+const FIRST_ROW = { formula: 2, template: 26 };
+
+const isFormula = v => v && typeof v === 'object' && ('formula' in v || 'sharedFormula' in v);
+// a cell value the way openpyxl returns it: formulas as "=..." text, rich text and links as plain text
+function raw(v) {
+  if (v && typeof v === 'object' && !(v instanceof Date)) {
+    if (isFormula(v)) return '=' + (v.formula || v.sharedFormula || '');
+    if (v.richText) return v.richText.map(t => t.text).join('');
+    if ('text' in v) return v.text;
+    if ('error' in v) return v.error;
+  }
+  return v ?? null;
+}
+// the template is read like openpyxl data_only: a formula gives its cached result
+const shown = v => isFormula(v) ? raw(v.result ?? null) : raw(v);
+const pad2 = n => String(n).padStart(2, '0');
+const isoDay = d => `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+const pyStr = v => v instanceof Date ? isoDay(v) + ' 00:00:00' : typeof v === 'boolean' ? (v ? 'True' : 'False') : String(v);
+
+function cleanKey(v) {
+  v = raw(v);
+  return v == null ? '' : pyStr(v).replace(/ /g, ' ').trim().toUpperCase();
+}
+// Decimal(str(value)).quantize(0.01, ROUND_HALF_UP): decided on the decimal text, so 11.285 -> 11.29
+function round2(v) {
+  if (v == null || typeof v === 'boolean' || typeof v === 'object') return v;
+  const s = String(v).trim();
+  if (!/^[+-]?(\d+(\.\d*)?|\.\d+)$/.test(s)) return /^[+-]?(\d+(\.\d*)?|\.\d+)e[+-]?\d+$/i.test(s) ? Number(Number(s).toFixed(2)) : v;
+  const [int, frac = ''] = s.replace(/^[+-]/, '').split('.');
+  const f = (frac + '000').slice(0, 3);
+  let cents = BigInt(int || '0') * 100n + BigInt(f.slice(0, 2));
+  if (f[2] >= '5') cents += 1n;
+  return (s[0] === '-' ? -1 : 1) * Number(cents) / 100;
+}
+function validDay(y, m, d) {
+  const t = new Date(Date.UTC(y, m - 1, d));
+  return y >= 1900 && t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
+}
+function parseCustomDate(v) {
+  v = raw(v);
+  if (v == null || pyStr(v).trim() === '') return '';
+  if (v instanceof Date) return isoDay(v);
+  const value = pyStr(v).trim(), clean = value.replace(/[./-]/g, '');
+  if (clean.length === 8 && /^\d+$/.test(clean)) {
+    for (const [y, m, d] of [[clean.slice(0, 4), clean.slice(4, 6), clean.slice(6)], [clean.slice(4), clean.slice(2, 4), clean.slice(0, 2)]]) {
+      if (validDay(+y, +m, +d)) return `${y}-${m}-${d}`;
+    }
+  }
+  const iso = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (iso && validDay(+iso[1], +iso[2], +iso[3])) return `${iso[1]}-${pad2(+iso[2])}-${pad2(+iso[3])}`;
+  return v;
+}
+const ISO = /^\d{4}-\d{2}-\d{2}$/;
+function ndk(v) {
+  const parsed = parseCustomDate(v);
+  if (typeof parsed === 'string' && ISO.test(parsed)) return parsed;
+  const r = raw(v);
+  return r ? pyStr(r).trim() : '';
+}
+function toExcelDate(v) {
+  const parsed = parseCustomDate(v);
+  if (typeof parsed === 'string' && ISO.test(parsed)) { const [y, m, d] = parsed.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); }
+  return v;
+}
+function priceKey(v) {
+  v = raw(v);
+  if (v == null) return null;
+  const n = typeof v === 'number' ? v : typeof v === 'boolean' ? +v : typeof v === 'string' && v.trim() !== '' ? Number(v.trim()) : NaN;
+  return Number.isNaN(n) ? pyStr(v).trim() : Math.round(n * 1e4) / 1e4;
+}
+
+const loadBook = async buf => { const wb = new ExcelJS.Workbook(); await wb.xlsx.load(buf); return wb; };
+const activeSheet = wb => wb.worksheets[wb.views?.[0]?.activeTab ?? 0] || wb.worksheets[0];
+const cellAt = (ws, r, c) => ws.getRow(r).getCell(c);
+const valueAt = (ws, r, c) => ws.getRow(r).getCell(c).value;
+const restyle = (cell, patch) => { cell.style = { ...cell.style, ...patch }; };  // ExcelJS cells can share style objects
+function highlightRow(ws, r, fill) {
+  for (let c = 1, n = ws.columnCount; c <= n; c++) restyle(cellAt(ws, r, c), { fill });
+}
+function copyRowStyle(ws, from, to) {
+  for (let c = 1, n = ws.columnCount; c <= n; c++) {
+    const s = cellAt(ws, from, c).style;
+    if (s && Object.keys(s).length) cellAt(ws, to, c).style = structuredClone(s);
+  }
+}
+function countRows(ws, role) {
+  let n = 0;
+  for (let r = FIRST_ROW[role]; r <= ws.rowCount; r++) if (cleanKey(valueAt(ws, r, 2))) n++;
+  return n;
+}
+
+function removeDuplicatePromoRows(ws) {
+  const seen = new Set(), del = [];
+  for (let r = 2, last = ws.rowCount; r <= last; r++) {
+    const item = cleanKey(valueAt(ws, r, 2));
+    if (!item) continue;
+    const key = JSON.stringify([item, priceKey(valueAt(ws, r, 3)), ndk(valueAt(ws, r, 8)), ndk(valueAt(ws, r, 9))]);
+    if (seen.has(key)) del.push(r); else seen.add(key);
+  }
+  for (const r of del.reverse()) ws.spliceRows(r, 1);
+  return del.length;
+}
+function highlightDuplicateItemCodes(ws) {
+  const groups = new Map();
+  for (let r = 2, last = ws.rowCount; r <= last; r++) {
+    const item = cleanKey(valueAt(ws, r, 2));
+    if (item) groups.set(item, [...(groups.get(item) || []), r]);
+  }
+  for (const rows of groups.values()) {
+    if (rows.length < 2) continue;
+    for (const r of rows) { const cell = cellAt(ws, r, 2); restyle(cell, { fill: YELLOW_FILL, font: { ...cell.font, bold: true } }); }
+  }
+}
+function buildReportSheet(wb, ws, templateRows, formulaItems, updated, added) {
+  const rep = wb.addWorksheet('Report');
+  rep.orderNo = Math.min(...wb.worksheets.map(w => w.orderNo)) - 1;  // first tab, like create_sheet("Report", 0)
+  let total = 0;
+  for (let r = 2, last = ws.rowCount, cols = ws.columnCount; r <= last; r++) {
+    for (let c = 1; c <= cols; c++) { const v = raw(valueAt(ws, r, c)); if (v !== null && v !== '') { total++; break; } }
+  }
+  const header = (ref, text, extra = {}) => { const cell = rep.getCell(ref); cell.value = text; cell.font = { ...WHITE_BOLD, ...extra }; cell.fill = HEADER_FILL; return cell; };
+  rep.mergeCells('A1:E1');
+  header('A1', 'Directo Upload Report', { size: 14 }).alignment = { horizontal: 'center' };
+  header('A3', 'Summary');
+  const addedSet = new Set(added);
+  const summary = [
+    ['Template records', templateRows.length],
+    ['New item codes', new Set(added.filter(i => !formulaItems.has(i))).size],
+    ['Updated records', updated.size],
+    ['Unchanged', [...formulaItems].filter(i => !updated.has(i) && !addedSet.has(i)).length],
+    ['Total Items Need Uploading', total],
+  ];
+  summary.forEach(([label, value], i) => { rep.getCell(4 + i, 1).value = label; rep.getCell(4 + i, 2).value = value; });
+  header('A10', 'Repeated item summary');
+  ['Item code', 'Occurrences', 'Status', 'Promo periods', 'Note'].forEach((h, i) => { const cell = rep.getCell(11, i + 1); cell.value = h; cell.font = { ...WHITE_BOLD }; cell.fill = HEADER_FILL; });
+  const pivot = new Map();
+  for (let r = 2, last = ws.rowCount; r <= last; r++) {
+    const item = cleanKey(valueAt(ws, r, 2));
+    if (!item) continue;
+    if (!pivot.has(item)) pivot.set(item, { count: 0, periods: [], prices: new Map(), invalid: false });
+    const e = pivot.get(item);
+    e.count++;
+    const start = ndk(valueAt(ws, r, 8)), end = ndk(valueAt(ws, r, 9));
+    const period = `${start || '-'} to ${end || '-'}`;
+    if (!e.periods.includes(period)) e.periods.push(period);
+    if (!e.prices.has(period)) e.prices.set(period, new Set());
+    e.prices.get(period).add(JSON.stringify(priceKey(valueAt(ws, r, 3))));
+    if (start && end && start > end) e.invalid = true;
+  }
+  const ORDER = { UPDATED: 0, ADDED: 1, UNCHANGED: 2 };
+  const cmp = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+  const items = [];
+  for (const [item, e] of pivot) {
+    const status = updated.has(item) ? 'UPDATED' : addedSet.has(item) ? 'ADDED' : 'UNCHANGED';
+    if (e.count <= 1 && !e.invalid) continue;
+    const notes = [];
+    if ([...e.prices.values()].some(s => s.size > 1)) notes.push('Please contact PIC');
+    if (e.invalid) notes.push('Re-check promo date');
+    items.push([ORDER[status], status, item, e.count, e.periods.join('\n'), notes.join('; ')]);
+  }
+  items.sort((x, y) => x[0] - y[0] || cmp(x[1], y[1]) || cmp(x[2], y[2]) || x[3] - y[3] || cmp(x[4], y[4]) || cmp(x[5], y[5]));
+  let row = 12;
+  for (const [, status, item, count, periods, note] of items) {
+    [item, count, status, periods, note].forEach((v, i) => { rep.getCell(row, i + 1).value = v === '' ? null : v; });
+    const fill = status === 'UPDATED' ? UPDATED_FILL : status === 'ADDED' ? ADDED_FILL : null;
+    if (fill) for (let c = 1; c <= 5; c++) rep.getCell(row, c).fill = fill;
+    row++;
+  }
+  for (let r = 12; r < row; r++) rep.getCell(r, 4).alignment = { wrapText: true };
+  Object.entries({ A: 24, B: 14, C: 14, D: 58, E: 24 }).forEach(([col, w]) => { rep.getColumn(col).width = w; });
+  rep.getCell('A8').font = { bold: true };
+  rep.getCell('A8').fill = YELLOW_FILL;
+  rep.views = [{ state: 'frozen', xSplit: 0, ySplit: 11, topLeftCell: 'A12', activeCell: 'A12', tabSelected: true }];
+  rep.autoFilter = `A11:E${Math.max(11, row - 1)}`;
+  for (const w of wb.worksheets) if (w !== rep) w.views = (w.views?.length ? w.views : [{}]).map(v => ({ ...v, tabSelected: false }));
+  wb.views = [{ ...(wb.views?.[0] || {}), activeTab: 0, firstSheet: 0 }];
+  return pivot;
+}
+function previewRows(ws, pivot, changes) {
+  const rows = [];
+  for (let r = 2, last = ws.rowCount; r <= last; r++) {
+    const item = cleanKey(valueAt(ws, r, 2));
+    if (!item) continue;
+    const start = ndk(valueAt(ws, r, 8)), end = ndk(valueAt(ws, r, 9));
+    const [status, old_price] = changes.get(JSON.stringify([item, start, end])) || ['UNCHANGED', null];
+    const prices = pivot.get(item).prices.get(`${start || '-'} to ${end || '-'}`);
+    rows.push({ item, start, end, price: raw(valueAt(ws, r, 3)), old_price, status, price_conflict: prices.size > 1, bad_date: !!(start && end && start > end) });
+  }
+  return rows;
+}
+
+async function buildUpload(formulaBuf, templateBuf) {
+  const wb = await loadBook(formulaBuf);
+  const ws = wb.worksheets[0];
+  ws.name = 'Directo_Upload';
+  const formulaItems = new Set();
+  for (let r = 2, last = ws.rowCount; r <= last; r++) {
+    const item = cleanKey(valueAt(ws, r, 2));
+    if (item) formulaItems.add(item);
+    cellAt(ws, r, 4).value = null;
+    restyle(cellAt(ws, r, 8), { numFmt: DATE_FORMAT });
+    restyle(cellAt(ws, r, 9), { numFmt: DATE_FORMAT });
+  }
+  const tws = activeSheet(await loadBook(templateBuf));
+  const templateRows = [];
+  for (let r = FIRST_ROW.template, last = tws.rowCount; r <= last; r++) {
+    const [, itemValue, priceValue, startValue, endValue] = [1, 2, 3, 4, 5].map(c => shown(valueAt(tws, r, c)));
+    const item = cleanKey(itemValue), price = round2(priceValue);
+    if (!item || price == null || price === '') continue;
+    templateRows.push({ item, price, start: ndk(startValue), end: ndk(endValue), startValue, endValue });
+  }
+  const existing = new Map(), details = new Map();
+  for (let r = 2, last = ws.rowCount; r <= last; r++) {
+    const item = cleanKey(valueAt(ws, r, 2));
+    if (!item) continue;
+    const key = JSON.stringify([item, ndk(valueAt(ws, r, 8)), ndk(valueAt(ws, r, 9))]);
+    existing.set(key, [...(existing.get(key) || []), r]);
+    if (!details.has(item)) details.set(item, [4, 5, 6].map(c => { const v = valueAt(ws, r, c); return v && v.sharedFormula ? raw(v.result ?? null) : v; }));
+  }
+  const updated = new Set(), added = [], changes = new Map();
+  for (const rec of templateRows) {
+    const key = JSON.stringify([rec.item, rec.start, rec.end]);
+    const matching = existing.get(key) || [];
+    if (matching.length) {
+      if (!changes.has(key)) changes.set(key, ['UPDATED', round2(raw(valueAt(ws, matching[0], 3)))]);
+      for (const r of matching) { cellAt(ws, r, 3).value = rec.price; highlightRow(ws, r, UPDATED_FILL); }
+      updated.add(rec.item);
+      continue;
+    }
+    const target = ws.rowCount + 1;
+    copyRowStyle(ws, 2, target);
+    const [, affects, locations] = details.get(rec.item) || ['', 'Static', '2'];
+    [null, rec.item, rec.price, null, affects, locations, 0, rec.startValue, rec.endValue].forEach((v, i) => { cellAt(ws, target, i + 1).value = v; });
+    restyle(cellAt(ws, target, 8), { numFmt: DATE_FORMAT });
+    restyle(cellAt(ws, target, 9), { numFmt: DATE_FORMAT });
+    highlightRow(ws, target, ADDED_FILL);
+    added.push(rec.item);
+    changes.set(key, ['ADDED', null]);
+    existing.set(key, [...(existing.get(key) || []), target]);
+  }
+  for (let r = 2, last = ws.rowCount; r <= last; r++) {
+    cellAt(ws, r, 4).value = null;
+    const price = cellAt(ws, r, 3);
+    price.value = round2(price.value);
+    for (const c of [8, 9]) {
+      const cell = cellAt(ws, r, c);
+      cell.value = toExcelDate(cell.value);
+      restyle(cell, { numFmt: DATE_FORMAT });
+    }
+  }
+  const removed = removeDuplicatePromoRows(ws);
+  highlightDuplicateItemCodes(ws);
+  const pivot = buildReportSheet(wb, ws, templateRows, formulaItems, updated, added);
+  return { wb, result: { template_records: templateRows.length, updated: updated.size, added: added.length, removed_duplicates: removed, rows: previewRows(ws, pivot, changes) } };
+}
+/* ENGINE END */
+
+async function describeFile(buf, name, role) {
+  const wb = await loadBook(buf);
+  const ws = role === 'formula' ? wb.worksheets[0] : activeSheet(wb);
+  return { name, buf, sheet: ws.name, rows: countRows(ws, role) };
+}
+async function offerDownload(data, filename) {
+  const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const downloads = window.claude?.use ? await window.claude.use('downloads') : null;
+  if (downloads) return downloads.save({ filename, data: blob });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: filename });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+const VIEWS = ['welcome', 'files', 'done', 'home', 'changes', 'rows', 'detail', 'export', 'rules'];
+const SHELL = new Set(['home', 'changes', 'rows', 'detail', 'export', 'rules']);
+const TABS = new Set(['home', 'changes', 'rows', 'rules']);
+const ROLE = { formula: 'File formula', template: 'File template' };
+const state = {
+  view: '', busy: false, files: { formula: null, template: null }, errors: {}, wb: null, pickRole: 'formula',
+  rows: [], saved: null, saveMode: 'plain', reviewed: new Set(),
+  filter: 'all', query: '', limit: 150, chartFilter: 'all', item: null, nav: [], lists: {}, returnTo: {},
+};
+const outName = () => state.saveMode === 'dated' ? `Directo_Upload_${day(isoDay(new Date(Date.now() - new Date().getTimezoneOffset() * 60000)))}.xlsx` : 'Directo_Upload.xlsx';
+
+function setResult(res) {
+  state.rows = res.rows.map((r, idx) => {
+    const issue = r.price_conflict || r.bad_date;
+    const pct = r.status === 'UPDATED' && typeof r.price === 'number' && typeof r.old_price === 'number' && r.old_price ? (r.price - r.old_price) / r.old_price * 100 : null;
+    return { ...r, idx, issue, pct };
+  });
+  state.reviewed = new Set();
+  state.filter = state.rows.some(r => r.issue) ? 'issues' : 'all';
+}
+function counts() {
+  const c = { all: 0, UPDATED: 0, ADDED: 0, UNCHANGED: 0, issues: 0, up: 0, down: 0 };
+  for (const r of state.rows) {
+    c.all++; c[r.status]++;
+    if (r.issue) c.issues++;
+    if (r.pct > 0) c.up++; else if (r.pct < 0) c.down++;
+  }
+  return c;
+}
+const has = () => state.rows.length > 0;
+
+/* one row in the coin-list style */
+function rowHTML(r, ctx) {
+  const kind = r.issue ? 'ISSUE' : r.status;
+  let second;
+  if (r.issue) second = `<span class="down">${r.price_conflict ? 'Khác giá' : 'Ngày sai'}</span>`;
+  else if (r.status === 'UPDATED') second = `<span class="${r.pct > 0 ? 'up' : r.pct < 0 ? 'down' : 'gray'}">${r.pct == null ? 'Đổi giá' : signed(r.pct)}</span>`;
+  else if (r.status === 'ADDED') second = `<span class="new">Thêm mới</span>`;
+  else second = `<span class="muted">Không đổi</span>`;
+  return `<button class="row${state.reviewed.has(r.idx) ? ' reviewed' : ''}" data-act="open-row" data-idx="${r.idx}" data-ctx="${ctx}">
+    <span class="st ${kind}">${icon(kind)}</span>
+    <span class="r-name"><b>${esc(r.item)}</b><span>${period(r)}</span></span>
+    <span class="r-val"><span>${price(r.price)}</span>${second}</span></button>`;
+}
+function listHTML(rows, ctx, empty) {
+  state.lists[ctx] = rows.map(r => r.idx);
+  return rows.length ? rows.map(r => rowHTML(r, ctx)).join('') : `<div class="empty">${empty}</div>`;
+}
+const noData = `<span>Chưa có dữ liệu. Chọn 2 file và bấm Xem trước.</span><button class="btn btn-dark" data-go="files">Chọn file</button>`;
+
+function plotHTML(values, fmt, { zero = false, note = '' } = {}) {
+  if (values.length === 1) values = [values[0], values[0]];
+  const lo = Math.min(...values), hi = Math.max(...values), span = hi - lo || 1;
+  const y = v => 8 + (1 - (v - lo) / span) * 84;
+  const pts = values.map((v, i) => [i / (values.length - 1) * 100, y(v)]);
+  const iHi = values.indexOf(hi), iLo = values.indexOf(lo);
+  const zy = zero && lo < 0 && hi > 0 ? y(0) : null;
+  return `<div class="plot" role="img" aria-label="${esc(note)}">
+      <span class="gl" style="top:0"></span><span class="gl" style="top:${zy ?? 50}%"></span><span class="gl" style="bottom:0"></span><span class="vl"></span>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts.map(p => p[0].toFixed(2) + ',' + p[1].toFixed(2)).join(' ')}"/></svg>
+      ${[iLo, iHi].map(i => `<span class="mk" style="left:${pts[i][0]}%;top:${pts[i][1]}%"></span>`).join('')}
+      <span class="lab top">${fmt(hi)}</span><span class="lab bot">${fmt(lo)}</span>
+      ${zy != null ? `<span class="lab zero" style="top:${zy}%">0%</span>` : ''}
+    </div>`;
+}
+
+const RENDER = {
+  shared() {
+    const c = counts();
+    document.querySelectorAll('.bell .dot').forEach(d => d.hidden = !c.issues);
+    $('#nav-issues').hidden = !c.issues;
+    $('#nav-issues').textContent = c.issues;
+    const { formula, template } = state.files;
+    $('#side-files').innerHTML = formula || template
+      ? `<span class="sf-label">Đang làm với</span><span><b>${esc(formula?.name || 'Chưa chọn formula')}</b><b>${esc(template?.name || 'Chưa chọn template')}</b></span>`
+      : `<span class="sf-label">Chưa chọn file</span><b>Bấm để chọn 2 file</b>`;
+  },
+  welcome() {},
+  files() {
+    for (const role of ['formula', 'template']) {
+      const f = state.files[role], err = state.errors[role];
+      const box = f
+        ? `<button class="filebox${err ? ' bad' : ''}" data-act="pick" data-role="${role}"><span class="st UPDATED">${icon('check')}</span>
+            <span class="fb-text"><b>${esc(f.name)}</b><span>Sheet “${esc(f.sheet)}” · ${num.format(f.rows)} dòng dữ liệu</span></span><span class="fb-act">Đổi</span></button>`
+        : `<button class="filebox none${err ? ' bad' : ''}" data-act="pick" data-role="${role}"><span class="st UNCHANGED">${icon('file')}</span>
+            <span class="fb-text"><b>Chưa chọn file</b><span>${role === 'formula' ? 'Giá hiện tại' : 'Giá mới cần cập nhật'}</span></span><span class="fb-act">Chọn…</span></button>`;
+      $('#field-' + role).innerHTML = `<p class="field-label">${ROLE[role]}<span>${role === 'formula' ? 'giá hiện tại' : 'giá mới'}</span></p>${box}
+        ${err ? `<p class="field-err">${icon('ISSUE')}${esc(err)}</p>` : ''}`;
+    }
+  },
+  home() {
+    const c = counts(), { formula, template } = state.files;
+    $('#who').innerHTML = formula || template
+      ? `<span class="st FILE">${icon('sheet')}</span><span><span class="who-name">${esc(formula?.name || 'Chưa chọn file formula')}</span><span class="who-sub">+ ${esc(template?.name || 'chưa chọn file template')}</span></span>`
+      : `<span class="st UNCHANGED">${icon('file')}</span><span><span class="who-name">Chưa chọn file</span><span class="who-sub">Bấm để chọn file formula và template</span></span>`;
+    $('#home-total').textContent = has() ? num.format(c.all) : '—';
+    $('#home-delta').innerHTML = has() ? `<span class="up">+${num.format(c.ADDED)} thêm mới</span><span class="muted">${num.format(c.UPDATED)} đổi giá</span>` : '';
+    $('#pick-sub').textContent = formula && template ? 'Đã chọn 2 file' : 'Formula + template';
+    $('#export-sub').textContent = has() ? `${num.format(c.all)} dòng` : 'Sau khi xem trước';
+    $('#home-badge').hidden = !c.issues;
+    $('#home-badge').textContent = `${c.issues} dòng`;
+    $('#home-pager').hidden = !!c.issues;
+    const issues = state.rows.filter(r => r.issue);
+    $('#home-issues').innerHTML = !has() ? `<div class="empty">${noData}</div>`
+      : issues.length ? listHTML(issues.slice(0, 4), 'home', '') + (issues.length > 4 ? `<div class="panel-foot"><button class="btn btn-dark sm" data-act="list" data-filter="issues">Xem tất cả ${issues.length} dòng</button></div>` : '')
+      : `<div class="empty"><span class="st UPDATED">${icon('check')}</span>Không có dòng nào cần xem lại.</div>`;
+  },
+  changes() {
+    const c = counts();
+    const q = $('#changes-q').value.trim().toUpperCase();
+    $('#changes-total').textContent = has() ? num.format(c.UPDATED) : '—';
+    $('#changes-split').innerHTML = has() ? `<span class="gray">Trong ${num.format(c.all)} dòng</span><span class="up">Tăng ${num.format(c.up)}</span><span class="down">Giảm ${num.format(c.down)}</span>` : '';
+    const changed = state.rows.filter(r => r.pct != null && (state.chartFilter === 'all' || (state.chartFilter === 'up' ? r.pct > 0 : r.pct < 0)));
+    const sorted = changed.map(r => r.pct).sort((a, b) => a - b);
+    const step = Math.max(1, Math.ceil(sorted.length / 120));
+    const sample = sorted.filter((_, i) => i % step === 0 || i === sorted.length - 1);
+    const filters = [['all', 'Tất cả'], ['up', 'Tăng'], ['down', 'Giảm']];
+    $('#changes-chart').innerHTML = (sample.length
+      ? plotHTML(sample, signed, { zero: true, note: `Mức đổi giá của ${changed.length} dòng, từ ${signed(sorted[0])} đến ${signed(sorted[sorted.length - 1])}` })
+      : `<div class="plot-empty">${has() ? 'Không có dòng nào khớp bộ lọc.' : 'Biểu đồ mức đổi giá sẽ hiện ở đây sau khi xem trước.'}</div>`)
+      + `<div class="ranges" role="group" aria-label="Lọc biểu đồ">${filters.map(([k, l]) => `<button data-act="chart-filter" data-filter="${k}" aria-pressed="${state.chartFilter === k}">${l}</button>`).join('')}</div>
+         <p class="axis-note">Mỗi điểm là một dòng đổi giá, xếp từ giảm nhiều nhất đến tăng nhiều nhất</p>`;
+    const top = changed.filter(r => !q || r.item.includes(q)).sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct)).slice(0, 6);
+    $('#changes-top').innerHTML = has() ? listHTML(top, 'changes', 'Không có mã nào khớp.') : `<div class="empty">${noData}</div>`;
+    $('#changes-foot').hidden = !has();
+  },
+  rows() {
+    const c = counts();
+    const tabs = [['all', 'Tất cả', c.all], ['issues', 'Cần xem', c.issues], ['UPDATED', 'Đổi giá', c.UPDATED], ['ADDED', 'Thêm mới', c.ADDED], ['UNCHANGED', 'Không đổi', c.UNCHANGED]];
+    $('#rows-tabs').innerHTML = tabs.map(([k, l, n]) => `<button role="tab" data-act="list" data-filter="${k}" aria-selected="${state.filter === k}">${l}${has() ? `<sup>${num.format(n)}</sup>` : ''}</button>`).join('');
+    if (!has()) { $('#rows-list').innerHTML = `<div class="empty">${noData}</div>`; return; }
+    const q = state.query.trim().toUpperCase();
+    const rows = state.rows.filter(r => (state.filter === 'all' || (state.filter === 'issues' ? r.issue : r.status === state.filter)) && (!q || r.item.includes(q)));
+    state.lists.rows = rows.map(r => r.idx);
+    const shown = rows.slice(0, state.limit);
+    $('#rows-list').innerHTML = (shown.length ? shown.map(r => rowHTML(r, 'rows')).join('') : `<div class="empty">Không có dòng nào khớp bộ lọc.</div>`)
+      + (rows.length > shown.length ? `<div class="more"><button class="btn btn-dark sm" data-act="more">Hiện thêm (${num.format(rows.length - shown.length)} dòng nữa)</button></div>` : '');
+  },
+  detail() {
+    const r = state.rows[state.item];
+    if (!r) return go('rows');
+    const kind = r.issue ? 'ISSUE' : r.status;
+    $('#detail-title').textContent = `Mã ${r.item}`;
+    const change = r.status === 'UPDATED' && r.pct != null ? `<span class="${r.pct > 0 ? 'up' : 'down'}">${signed(r.pct)}</span>`
+      : r.status === 'ADDED' ? '<span class="r-val"><span class="new">Thêm mới</span></span>' : '<span class="muted">Không đổi</span>';
+    $('#detail-head').innerHTML = `<span class="st ${kind}">${icon(kind)}</span><div class="h-name"><b>${esc(r.item)}</b><span>${period(r)}</span></div><div class="h-val"><b>${price(r.price)}</b>${change}</div>`;
+    $('#mark').setAttribute('aria-pressed', state.reviewed.has(r.idx));
+    const same = state.rows.filter(x => x.item === r.item).sort((a, b) => String(a.start).localeCompare(String(b.start)));
+    const values = same.length > 1 ? same.map(x => x.price).filter(v => typeof v === 'number')
+      : [r.old_price ?? r.price, r.price].filter(v => typeof v === 'number');
+    $('#detail-chart').innerHTML = values.length ? plotHTML(values, price, { note: `Giá của mã ${r.item}` })
+      + `<p class="axis-note">${same.length > 1 ? `Giá của ${same.length} dòng cùng mã, xếp theo ngày bắt đầu` : 'Giá cũ → giá mới'}</p>` : '';
+    const stats = [['Giá cũ', r.status === 'UPDATED' ? price(r.old_price) : '—'], ['Giá mới', price(r.price)], ['Từ ngày', day(r.start)], ['Đến ngày', day(r.end)]];
+    $('#detail-stats').innerHTML = stats.map(([l, v]) => `<div class="stat"><p>${l}</p><b>${v}</b></div>`).join('');
+    const notes = [];
+    if (r.price_conflict) notes.push(`<div class="notice err">${icon('ISSUE')}<p>Mã này có nhiều giá trong cùng kỳ khuyến mãi. Liên hệ PIC để chốt giá.</p></div>`);
+    if (r.bad_date) notes.push(`<div class="notice err">${icon('ISSUE')}<p>Ngày kết thúc trước ngày bắt đầu. Kiểm tra lại file template.</p></div>`);
+    if (same.length > 1 && !r.price_conflict) notes.push(`<div class="notice warn">${icon('ISSUE')}<p>Mã xuất hiện ${same.length} lần. Trong file Excel ô mã sẽ được tô vàng.</p></div>`);
+    $('#detail-notes').innerHTML = notes.join('');
+    const nextIssue = state.rows.find(x => x.issue && x.idx !== r.idx && !state.reviewed.has(x.idx));
+    $('#detail-next').textContent = nextIssue ? 'Dòng cần xem tiếp theo' : 'Về danh sách';
+  },
+  export() {
+    if (!has()) return go('files');
+    const c = counts();
+    document.querySelectorAll('.seg [role=tab]').forEach(t => t.setAttribute('aria-selected', t.dataset.mode === state.saveMode));
+    $('#export-rows').textContent = `${num.format(c.all)} dòng`;
+    $('#export-upd').textContent = num.format(c.UPDATED);
+    $('#export-add').textContent = num.format(c.ADDED);
+    $('#export-issue').textContent = num.format(c.issues);
+    $('#export-issue-wrap').classList.toggle('alert', c.issues > 0);
+    $('#export-name').textContent = outName();
+    $('#save-note').textContent = window.claude?.use
+      ? 'Trình duyệt sẽ hỏi bạn xác nhận trước khi lưu file.'
+      : 'File được tải về thư mục Tải xuống (Downloads) của trình duyệt.';
+  },
+  done() {
+    const c = counts();
+    $('#done-text').innerHTML = `Đã tạo <b>${num.format(c.all)} dòng</b> trong file <b>${esc(state.saved)}</b>.<br>`
+      + (c.issues ? `<b class="down">${num.format(c.issues)} dòng</b> cần xem lại được ghi trong sheet Report.` : 'Không có dòng nào cần xem lại.');
+  },
+  rules() {},
+};
+
+function validate() {
+  const e = {}, { formula, template } = state.files;
+  for (const role of ['formula', 'template']) {
+    const f = state.files[role];
+    if (!f) e[role] = `Chọn ${ROLE[role].toLowerCase()} trước.`;
+    else if (!f.rows) e[role] = role === 'template' ? 'Không thấy dữ liệu ở cột B từ dòng 26. Có thể bạn chọn nhầm file.' : 'Không thấy dữ liệu ở cột B. Có thể bạn chọn nhầm file.';
+  }
+  if (formula && template && formula.name === template.name && formula.buf.byteLength === template.buf.byteLength) e.template = 'Hai ô đang cùng một file.';
+  else if (formula && /template/i.test(formula.name) && !/formula/i.test(formula.name)) e.formula = 'File này giống file template. Bấm “Đổi chỗ 2 file” nếu bị đặt ngược.';
+  state.errors = e;
+  RENDER.files();
+  const first = Object.keys(e)[0];
+  if (first) $(`#field-${first} .filebox`).focus();
+  return !first;
+}
+
+function show(view) {
+  if (!VIEWS.includes(view)) view = 'home';
+  state.view = view;
+  for (const v of VIEWS) $('#v-' + v).hidden = v !== view;
+  $('#shell').hidden = !SHELL.has(view);
+  document.body.toggleAttribute('data-tab', TABS.has(view));
+  document.querySelectorAll('[data-nav]').forEach(b => b.dataset.nav === view ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
+  menu(false);
+  RENDER.shared();
+  RENDER[view]();
+  window.scrollTo(0, 0);
+}
+function go(view) {
+  if (location.hash.slice(1) === view) show(view); else location.hash = view;
+}
+function menu(open) {
+  document.body.classList.toggle('menu-open', open);
+  $('#scrim').hidden = !open;
+}
+function toast(msg) {
+  const t = $('#toast');
+  t.innerHTML = msg ? `<div class="notice err">${icon('ISSUE')}<p>${esc(msg)}</p></div>` : '';
+  t.hidden = !msg;
+  clearTimeout(toast.timer);
+  if (msg) toast.timer = setTimeout(() => toast(''), 6000);
+}
+function setFile(role, f) { state.files[role] = f; delete state.errors[role]; RENDER.files(); RENDER.shared(); }
+function openRow(idx, ctx) {
+  state.item = idx;
+  state.nav = state.lists[ctx] || [idx];
+  if (state.view !== 'detail') state.returnTo.detail = state.view;
+  go('detail');
+}
+
+const ACTS = {
+  start() { try { localStorage.setItem('directo.welcomed', '1'); } catch (e) {} go(state.files.formula ? 'home' : 'files'); },
+  welcome() { go('welcome'); },
+  menu() { menu(true); },
+  'menu-close'() { menu(false); },
+  back() { go(state.returnTo[state.view] || 'home'); },
+  issues() { state.filter = 'issues'; state.query = ''; $('#rows-q').value = ''; go('rows'); },
+  list(t) { state.filter = t.dataset.filter; state.limit = 150; if (state.view === 'rows') RENDER.rows(); else go('rows'); },
+  more() { state.limit += 300; RENDER.rows(); },
+  'chart-filter'(t) { state.chartFilter = t.dataset.filter; RENDER.changes(); },
+  'open-row'(t) { openRow(Number(t.dataset.idx), t.dataset.ctx); },
+  step(t) {
+    const i = state.nav.indexOf(state.item);
+    const next = state.nav[i + Number(t.dataset.dir)];
+    if (next == null) return toast(Number(t.dataset.dir) > 0 ? 'Đây là dòng cuối của danh sách.' : 'Đây là dòng đầu của danh sách.');
+    state.item = next; RENDER.detail();
+  },
+  mark() { const i = state.item; state.reviewed.has(i) ? state.reviewed.delete(i) : state.reviewed.add(i); RENDER.detail(); },
+  'next-issue'() {
+    const r = state.rows[state.item];
+    const next = state.rows.find(x => x.issue && x.idx !== r.idx && !state.reviewed.has(x.idx));
+    if (!next) return go('rows');
+    state.reviewed.add(r.idx);
+    state.item = next.idx; state.nav = state.rows.filter(x => x.issue).map(x => x.idx); RENDER.detail(); window.scrollTo(0, 0);
+  },
+  'to-export'() { if (has()) { state.returnTo.export = state.view; go('export'); } else { toast('Chọn 2 file và bấm Xem trước trước khi tạo file upload.'); go('files'); } },
+  'save-mode'(t) { state.saveMode = t.dataset.mode; RENDER.export(); },
+  async save() {
+    if (!state.wb) return go('files');
+    const name = state.saved || outName();
+    try { await offerDownload(await state.wb.xlsx.writeBuffer(), name); }
+    catch (e) {
+      if (e && e.code === 'declined') return toast('Bạn đã huỷ lưu file.');
+      throw e;
+    }
+    state.saved = name;
+    if (state.view !== 'done') go('done');
+  },
+  pick(t) { state.pickRole = t.dataset.role; const input = $('#file-input'); input.value = ''; input.click(); },
+  'pick-pair'() { const input = $('#pair-input'); input.value = ''; input.click(); },
+  async swap() {
+    const { formula, template } = state.files;
+    state.files = { formula: null, template: null }; state.errors = {};
+    if (template) state.files.formula = await describeFile(template.buf, template.name, 'formula');
+    if (formula) state.files.template = await describeFile(formula.buf, formula.name, 'template');
+    RENDER.files(); RENDER.shared();
+  },
+  async preview(t) {
+    if (!validate()) return;
+    t.innerHTML = '<span class="spin"></span>Đang đọc và so sánh 2 file…';
+    try {
+      const { wb, result } = await buildUpload(state.files.formula.buf, state.files.template.buf);
+      state.wb = wb; state.saved = null;
+      setResult(result);
+    } finally { t.textContent = 'Xem trước'; }
+    state.query = ''; state.limit = 150; state.chartFilter = 'all';
+    go('home');
+  },
+  reset() {
+    Object.assign(state, { files: { formula: null, template: null }, errors: {}, wb: null, rows: [], saved: null, reviewed: new Set(), filter: 'all', query: '' });
+    ['#rows-q', '#changes-q'].forEach(s => $(s).value = '');
+    go('files');
+  },
+};
+
+async function run(t, fn) {
+  if (state.busy) return;
+  state.busy = true;
+  t.setAttribute('aria-busy', 'true');
+  try { await fn(t); }
+  catch (e) { toast('Có lỗi khi xử lý: ' + (e && e.message ? e.message : e)); }
+  finally { state.busy = false; t.removeAttribute('aria-busy'); }
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-go], [data-act]');
+  if (!t) return;
+  if (t.dataset.go) return go(t.dataset.go);
+  const fn = ACTS[t.dataset.act];
+  if (fn) run(t, fn);
+});
+$('#rows-q').addEventListener('input', e => { state.query = e.target.value; state.limit = 150; RENDER.rows(); });
+$('#changes-q').addEventListener('input', () => RENDER.changes());
+document.addEventListener('keydown', e => { if (e.key === 'Escape') menu(false); });
+window.addEventListener('hashchange', () => show(location.hash.slice(1)));
+
+async function loadInto(role, file) {
+  try { setFile(role, await describeFile(await file.arrayBuffer(), file.name, role)); }
+  catch (e) { state.errors[role] = `Không đọc được ${file.name}. Hãy chọn file Excel .xlsx.`; RENDER.files(); }
+}
+async function loadPair(files) {
+  files = [...files].filter(f => /\.xlsx$/i.test(f.name)).slice(0, 2).sort((a, b) => /formula/i.test(b.name) - /formula/i.test(a.name));
+  if (!files.length) return toast('Chỉ nhận file Excel .xlsx.');
+  if (files.length === 1 && !/formula/i.test(files[0].name) && state.files.formula) return loadInto('template', files[0]);
+  await loadInto('formula', files[0]);
+  if (files[1]) await loadInto('template', files[1]);
+}
+$('#file-input').addEventListener('change', e => { if (e.target.files[0]) loadInto(state.pickRole, e.target.files[0]); });
+$('#pair-input').addEventListener('change', e => loadPair(e.target.files));
+document.addEventListener('dragover', e => { if (e.target.closest('#v-files')) e.preventDefault(); });
+document.addEventListener('drop', e => {
+  if (!e.target.closest('#v-files')) return;
+  e.preventDefault();
+  const box = e.target.closest('.filebox'), files = e.dataTransfer.files;
+  if (box && files.length === 1) loadInto(box.dataset.role, files[0]); else loadPair(files);
+});
+
+let welcomed = false;
+try { welcomed = localStorage.getItem('directo.welcomed') === '1'; } catch (e) { welcomed = true; }  // storage blocked: don't show the intro on every visit
+show(location.hash.slice(1) || (welcomed ? 'files' : 'welcome'));
+</script>
