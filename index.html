@@ -424,7 +424,7 @@ h2 { font-size: 16px; font-weight: 600; }
       <div class="panel help-list">
         <div><b>File formula</b><span>Sheet đầu tiên. Cột B là mã, C giá, H và I ngày bắt đầu, ngày kết thúc. Dữ liệu từ dòng 2.</span></div>
         <div><b>File template</b><span>Sheet đang mở khi lưu file. Đọc cột B–E từ dòng 26: mã, giá mới, ngày bắt đầu, ngày kết thúc.</span></div>
-        <div><b>Ghép dòng</b><span>Cùng mã và cùng kỳ khuyến mãi thì cập nhật giá. Khác kỳ thì thêm dòng mới. Dòng trùng hoàn toàn được bỏ bớt.</span></div>
+        <div><b>Ghép dòng</b><span>Cùng mã và cùng kỳ khuyến mãi thì cập nhật giá. Khác kỳ thì thêm dòng mới. Dòng trùng hoàn toàn được bỏ bớt. File formula trắng (chỉ có dòng tiêu đề) thì toàn bộ dòng template được điền vào, cột E là Static và cột F là 2.</span></div>
         <div><b>Giá và ngày</b><span>Giá làm tròn 2 số lẻ (11,285 thành 11,29). Ngày ở mọi kiểu gõ được đưa về dd.mm.yyyy.</span></div>
         <div><b>Cần xem lại</b><span>Mã có nhiều giá trong cùng kỳ (liên hệ PIC) và dòng có ngày kết thúc trước ngày bắt đầu. Các dòng này vẫn nằm trong file và được ghi ở sheet Report.</span></div>
         <div><b>Màu trong file Excel</b><span class="legend"><span class="pill UPDATED">Đổi giá</span><span class="pill ADDED">Thêm mới</span><span class="pill REVIEW">Mã lặp lại</span></span></div>
@@ -693,7 +693,7 @@ async function buildUpload(formulaBuf, templateBuf) {
       updated.add(rec.item);
       continue;
     }
-    const target = ws.rowCount + 1;
+    const target = Math.max(ws.rowCount, 1) + 1;  // openpyxl counts an empty sheet as one row, so row 1 stays the header row
     copyRowStyle(ws, 2, target);
     const [, affects, locations] = details.get(rec.item) || ['', 'Static', '2'];
     [null, rec.item, rec.price, null, affects, locations, 0, rec.startValue, rec.endValue].forEach((v, i) => { cellAt(ws, target, i + 1).value = v; });
@@ -724,7 +724,7 @@ async function buildUpload(formulaBuf, templateBuf) {
 async function describeFile(buf, name, role) {
   const wb = await loadBook(buf);
   const ws = role === 'formula' ? wb.worksheets[0] : activeSheet(wb);
-  return { name, buf, size: buf.byteLength, sheet: ws.name, rows: countRows(ws, role) };
+  return { name, buf, size: buf.byteLength, sheet: ws.name, rows: countRows(ws, role), header: !!cleanKey(valueAt(ws, 1, 2)) };
 }
 async function offerDownload(data, filename) {
   const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -738,7 +738,7 @@ async function offerDownload(data, filename) {
 
 const VIEWS = ['welcome', 'upload', 'review', 'detail', 'export', 'help'];
 const ROLE = {
-  formula: { label: 'File formula', what: 'giá hiện tại', hint: 'Sheet đầu tiên · cột B–I từ dòng 2' },
+  formula: { label: 'File formula', what: 'giá hiện tại', hint: 'Sheet đầu tiên · cột B–I từ dòng 2 · file trắng cũng được' },
   template: { label: 'File template', what: 'giá mới', hint: 'Sheet đang mở · cột B–E từ dòng 26' },
 };
 const STATUS = { REVIEW: 'Cần xem', UPDATED: 'Đổi giá', ADDED: 'Thêm mới', UNCHANGED: 'Không đổi' };
@@ -848,7 +848,8 @@ const RENDER = {
   welcome() {},
   upload() {
     const { formula, template } = state.files;
-    $('#upload-finding').innerHTML = formula && template ? `Đã đủ 2 file. Bấm <b>Kiểm tra thay đổi</b> để xem trước.`
+    $('#upload-finding').innerHTML = formula && template && !formula.rows ? `File formula đang trắng: toàn bộ dòng trong template sẽ được điền vào. Bấm <b>Kiểm tra thay đổi</b> để xem trước.`
+      : formula && template ? `Đã đủ 2 file. Bấm <b>Kiểm tra thay đổi</b> để xem trước.`
       : formula || template ? `Còn thiếu <b>${formula ? 'file template' : 'file formula'}</b>.`
       : 'Chọn file formula (giá hiện tại) và file template (giá mới) của kỳ khuyến mãi.';
     for (const role of ['formula', 'template']) {
@@ -858,9 +859,10 @@ const RENDER = {
       el.innerHTML = `<div class="drop-head"><h2>${R.label} <span>· ${R.what}</span></h2>${f ? `<button class="link" data-act="pick" data-role="${role}">Đổi file</button>` : ''}</div>
         <button class="drop-zone" data-act="pick" data-role="${role}" aria-label="${f ? 'Đổi' : 'Chọn'} ${R.label.toLowerCase()}">
           <svg class="file-ico" aria-hidden="true"><use href="#${f ? 'sheet-ok' : 'sheet-ico'}"/></svg>
-          <span class="fz-text">${f ? `<b>${esc(f.name)}</b><span>Sheet “${esc(f.sheet)}” · ${num.format(f.rows)} dòng mã · ${kb(f.size)}</span>`
+          <span class="fz-text">${f ? `<b>${esc(f.name)}</b><span>Sheet “${esc(f.sheet)}” · ${role === 'formula' && !f.rows ? 'file trắng, sẽ điền từ template' : `${num.format(f.rows)} dòng mã`} · ${kb(f.size)}</span>`
             : `<b>Kéo file vào đây hoặc bấm để chọn</b><span>Chỉ nhận file .xlsx</span>`}</span></button>
         <p class="drop-hint">${R.hint}</p>
+        ${role === 'formula' && f && !f.rows && !f.header ? `<p class="drop-hint">File chưa có dòng tiêu đề, dòng 1 của file xuất ra sẽ để trống.</p>` : ''}
         ${err ? `<p class="drop-err">${icon('alert')}${esc(err)}</p>` : ''}`;
     }
   },
@@ -876,6 +878,7 @@ const RENDER = {
     $('#review-finding').className = `finding${c.left ? ' alert' : ''}`;
     $('#review-finding').innerHTML = c.REVIEW
       ? `<b>${num.format(c.left)} / ${num.format(c.REVIEW)} dòng cần xem trước khi upload.</b> ${parts.join('; ')}.`
+      : !f.formula.rows ? `Đã điền <b>${num.format(c.all)} dòng</b> từ template vào file formula trắng. Không có dòng nào cần xem lại.`
       : `Không có dòng nào cần xem lại. ${num.format(c.UPDATED)} dòng đổi giá, ${num.format(c.ADDED)} dòng thêm mới.`;
     $('#sync').innerHTML = `<div><span>${esc(f.formula.name)}</span><b class="num">${num.format(f.formula.rows)}</b></div>${icon('plus')}
       <div><span>${esc(f.template.name)}</span><b class="num">${num.format(state.meta.template)}</b></div>${icon('arrow')}
@@ -929,7 +932,7 @@ function validate() {
   for (const role of ['formula', 'template']) {
     const f = state.files[role];
     if (!f) e[role] = `Chọn ${ROLE[role].label.toLowerCase()} trước.`;
-    else if (!f.rows) e[role] = role === 'template' ? 'Không thấy mã ở cột B từ dòng 26. Có thể bạn chọn nhầm file.' : 'Không thấy mã ở cột B. Có thể bạn chọn nhầm file.';
+    else if (!f.rows && role === 'template') e[role] = 'Không thấy mã ở cột B từ dòng 26. Có thể bạn chọn nhầm file.';
   }
   if (formula && template && formula.name === template.name && formula.size === template.size) e.template = 'Hai ô đang cùng một file.';
   else if (formula && /template/i.test(formula.name) && !/formula/i.test(formula.name)) e.formula = 'File này giống file template. Bấm “Đổi chỗ 2 file” nếu bị đặt ngược.';
